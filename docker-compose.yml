@@ -1,0 +1,37 @@
+# KAI Pulse: app + Postgres.
+#
+#   cp .env.example .env        # fill in the values
+#   docker compose up --build
+#   docker compose exec app python -m kai.server.admin create-user "Your Name"
+#   open http://localhost:8000 and paste the token
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kai
+      POSTGRES_USER: kai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kai -d kai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://kai:${POSTGRES_PASSWORD}@db:5432/kai
+    ports:
+      - "127.0.0.1:8000:8000"     # local only; put a TLS reverse proxy in front for other users
+    volumes:
+      - files:/data/files         # uploads when KAI_FILE_STORE=local
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  files:

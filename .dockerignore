@@ -1,0 +1,12 @@
+.git
+.claude
+.venv
+.kai_files
+node_modules
+legacy_orchestrate
+tests
+**/__pycache__
+*.db
+*.pdf
+*.json
+.env

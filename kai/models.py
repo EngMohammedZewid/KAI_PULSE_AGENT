@@ -8,6 +8,7 @@ endpoint works too. Provider packages are optional and imported lazily:
                                    WATSONX_URL, WATSONX_PROJECT_ID, WATSONX_API_KEY
     KAI_MODEL_PROVIDER=openai   -> pip install langchain-openai
                                    KAI_MODEL_BASE_URL (optional), OPENAI_API_KEY
+    KAI_MODEL_PROVIDER=dev      -> no LLM; echoes the user (try the app without credentials)
     KAI_MODEL_ID                -> model id (default openai/gpt-oss-120b)
 """
 from __future__ import annotations
@@ -36,7 +37,7 @@ def get_chat_model() -> BaseChatModel:
             model_id=model_id,
             url=os.environ["WATSONX_URL"],
             project_id=os.environ["WATSONX_PROJECT_ID"],
-            apikey=os.environ["WATSONX_API_KEY"],
+            api_key=os.environ["WATSONX_API_KEY"],
             params={"temperature": 0},
         )
 
@@ -48,4 +49,29 @@ def get_chat_model() -> BaseChatModel:
         return ChatOpenAI(model=model_id, base_url=os.environ.get("KAI_MODEL_BASE_URL") or None,
                           temperature=0)
 
-    raise RuntimeError(f"Unknown KAI_MODEL_PROVIDER '{provider}' (use watsonx or openai).")
+    if provider == "dev":
+        return DevEchoModel()
+
+    raise RuntimeError(f"Unknown KAI_MODEL_PROVIDER '{provider}' (use watsonx, openai or dev).")
+
+
+class DevEchoModel(BaseChatModel):
+    """KAI_MODEL_PROVIDER=dev: no LLM. Echoes the user so the app and UI can be
+    tried end to end without model credentials. Routing always lands on the
+    general responder, and fixed nodes (uploads, "add") work as normal."""
+
+    @property
+    def _llm_type(self) -> str:
+        return "dev-echo"
+
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        from langchain_core.messages import AIMessage, HumanMessage
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        last = next((m for m in reversed(messages) if isinstance(m, HumanMessage)), None)
+        text = last.content if last is not None and isinstance(last.content, str) else ""
+        reply = f"(dev model, no LLM) You said: {text}" if text else "(dev model, no LLM)"
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(reply))])
