@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
 # PDF generation using fpdf2 + arabic-reshaper + python-bidi.

@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 
 # ---------------------------------------------------------------------------
@@ -175,12 +175,26 @@ _COL_ALIASES: Dict[str, List[str]] = {
 }
 
 
+def _alias_in(alias: str, header: str) -> bool:
+    # Latin aliases must match whole words (an optional plural "s" allowed):
+    # a plain substring test let "cr" match inside "Description", so the
+    # description column was read as the credit column and all income was lost.
+    if alias.isascii():
+        pattern = rf"(?<![a-z]){re.escape(alias)}s?(?![a-z])"
+        return re.search(pattern, header) is not None
+    return alias in header
+
+
 def _match_col(header: str, role: str) -> bool:
     h = header.strip().lower()
-    return any(alias in h for alias in _COL_ALIASES.get(role, []))
+    return any(_alias_in(alias, h) for alias in _COL_ALIASES.get(role, []))
 
 
 def _find_col(headers: List[str], role: str) -> Optional[str]:
+    aliases = _COL_ALIASES.get(role, [])
+    for h in headers:  # an exact header name wins over a partial match
+        if h.strip().lower() in aliases:
+            return h
     for h in headers:
         if _match_col(h, role):
             return h

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import csv, io, json, urllib.parse, datetime
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 _COLORS = ["#2E6DB4","#C8A84B","#E05C2E","#3DAA6D","#9B59B6","#1ABC9C","#E74C3C","#F39C12"]
 _QUICKCHART = "https://quickchart.io/chart"

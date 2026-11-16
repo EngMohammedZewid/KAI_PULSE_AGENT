@@ -9,7 +9,7 @@ import re
 import urllib.parse
 import urllib.request
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
 # IBM Cloud Object Storage helpers (IAM token auth, stdlib only — no ibm_boto3)

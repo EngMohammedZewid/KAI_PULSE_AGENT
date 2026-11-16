@@ -1,4 +1,4 @@
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 
 @tool

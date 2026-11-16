@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlencode, urljoin
 
 import requests
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 
 def _env(name: str, default: str = "") -> str:
