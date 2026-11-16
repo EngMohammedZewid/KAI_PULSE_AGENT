@@ -1,0 +1,74 @@
+[
+ {
+  "date": "2026-01-01",
+  "description": "راتب شهر يناير",
+  "type": "credit",
+  "amount": 20000,
+  "balance": 20000,
+  "category": "Income"
+ },
+ {
+  "date": "2026-01-05",
+  "description": "سوبر ماركت",
+  "type": "debit",
+  "amount": 1500,
+  "balance": 18500,
+  "category": "Food"
+ },
+ {
+  "date": "2026-01-10",
+  "description": "قسط القرض",
+  "type": "debit",
+  "amount": 3000,
+  "balance": 15500,
+  "category": "Debt Payment"
+ },
+ {
+  "date": "2026-02-01",
+  "description": "راتب شهر فبراير",
+  "type": "credit",
+  "amount": 20000,
+  "balance": 35500,
+  "category": "Income"
+ },
+ {
+  "date": "2026-02-07",
+  "description": "مطعم",
+  "type": "debit",
+  "amount": 800,
+  "balance": 34700,
+  "category": "Food"
+ },
+ {
+  "date": "2026-02-10",
+  "description": "قسط القرض",
+  "type": "debit",
+  "amount": 3000,
+  "balance": 31700,
+  "category": "Debt Payment"
+ },
+ {
+  "date": "2026-03-01",
+  "description": "راتب شهر مارس",
+  "type": "credit",
+  "amount": 22000,
+  "balance": 53700,
+  "category": "Income"
+ },
+ {
+  "date": "2026-03-03",
+  "description": "رسوم مدرسة",
+  "type": "debit",
+  "amount": 5000,
+  "balance": 48700,
+  "category": "Education"
+ },
+ {
+  "date": "2026-03-10",
+  "description": "قسط القرض",
+  "type": "debit",
+  "amount": 3000,
+  "balance": 45700,
+  "category": "Debt Payment"
+ }
+]

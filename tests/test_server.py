@@ -6,7 +6,9 @@ checkpointer, a local FileStore and the scripted model from test_graph.
 from __future__ import annotations
 
 import tempfile
+import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -14,6 +16,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from kai.files import LocalFileStore
 from kai.graph import build_graph
+from kai.models import DevEchoModel
 from kai.server.app import Settings, create_app
 from kai.server.repo import MemoryRepo, hash_token
 from tests.test_graph import ScriptedModel, call, route, say
@@ -128,6 +131,69 @@ class ConversationTests(ServerTestCase):
         r = self.post(tid, "hello")  # nothing scripted -> the model raises
         self.assertEqual(r.status_code, 500)
         self.assertNotIn("scripted", r.text)
+
+
+class SlowEcho(DevEchoModel):
+    """Echo model that takes a moment, so concurrent requests really overlap."""
+
+    def _generate(self, *args, **kwargs):
+        time.sleep(0.05)
+        return super()._generate(*args, **kwargs)
+
+
+class ConcurrencyTests(unittest.TestCase):
+    """Two users talking at the same time never see each other's messages."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.repo = MemoryRepo()
+        graph = build_graph(SlowEcho(), checkpointer=InMemorySaver())
+        self.client = TestClient(create_app(graph, self.repo, LocalFileStore(tmp.name)))
+
+    def test_two_users_at_once(self):
+        users = {}
+        for name in ("Alice", "Bob"):
+            _, token = self.repo.create_user(name)
+            headers = {"Authorization": f"Bearer {token}"}
+            tid = self.client.post("/api/threads", json={}, headers=headers).json()["id"]
+            users[name] = (headers, tid)
+
+        def chat(name: str, i: int) -> tuple[str, str]:
+            headers, tid = users[name]
+            text = f"{name} message {i}"
+            while True:  # the same user's own messages queue behind each other
+                r = self.client.post(f"/api/threads/{tid}/messages", data={"text": text}, headers=headers)
+                if r.status_code != 409:
+                    break
+                time.sleep(0.01)
+            self.assertEqual(r.status_code, 200, r.text)
+            return text, r.json()["messages"][-1]["content"]
+
+        jobs = [(n, i) for i in range(5) for n in users]
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            for text, reply in pool.map(lambda job: chat(*job), jobs):
+                self.assertTrue(reply.endswith(f"You said: {text}"), reply)
+
+        for name, (headers, tid) in users.items():
+            history = self.client.get(f"/api/threads/{tid}", headers=headers).json()["messages"]
+            texts = [m["content"] for m in history]
+            other = "Bob" if name == "Alice" else "Alice"
+            self.assertEqual(len(history), 10)
+            self.assertFalse(any(other in t for t in texts), f"{name} sees {other}'s messages")
+
+    def test_same_thread_runs_one_at_a_time(self):
+        _, token = self.repo.create_user("Carol")
+        headers = {"Authorization": f"Bearer {token}"}
+        tid = self.client.post("/api/threads", json={}, headers=headers).json()["id"]
+        url = f"/api/threads/{tid}/messages"
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            codes = sorted(pool.map(lambda i: self.client.post(url, data={"text": f"m{i}"}, headers=headers).status_code,
+                                    range(4)))
+        self.assertIn(200, codes)
+        self.assertTrue(set(codes) <= {200, 409}, codes)
+        history = self.client.get(f"/api/threads/{tid}", headers=headers).json()["messages"]
+        self.assertEqual(len(history), 2 * codes.count(200), "each accepted message has one reply")
 
 
 class UploadLimitTests(ServerTestCase):
