@@ -9,6 +9,7 @@ only to the user who created it; another user's thread id answers 404.
     GET  /api/threads/{id}                  history + pending question, if any
     POST /api/threads/{id}/messages         multipart: text, files[] -> new replies
     POST /api/threads/{id}/resume           {"answer"} -> answers a pending question
+    POST /api/threads/{id}/feedback         {"message_index", "rating": up|down, "comment"?}
     GET  /                                  the chat page
 """
 from __future__ import annotations
@@ -17,7 +18,7 @@ import logging
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -50,6 +51,12 @@ class Resume(BaseModel):
     answer: str
 
 
+class Feedback(BaseModel):
+    message_index: int
+    rating: Literal["up", "down"]
+    comment: str = ""
+
+
 def _text(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -59,7 +66,8 @@ def _text(content: Any) -> str:
 
 
 def serialize(messages: list) -> list[dict]:
-    """User and assistant messages for the UI; tool traffic is left out."""
+    """User and assistant messages for the UI; tool traffic is left out.
+    `index` is the message's position in this list, stable as the thread grows."""
     out = []
     for m in messages:
         if isinstance(m, HumanMessage):
@@ -67,6 +75,8 @@ def serialize(messages: list) -> list[dict]:
                         "attachments": m.additional_kwargs.get("attachments", [])})
         elif isinstance(m, AIMessage) and _text(m.content).strip():
             out.append({"role": "assistant", "content": _text(m.content)})
+    for i, m in enumerate(out):
+        m["index"] = i
     return out
 
 
@@ -131,8 +141,9 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
                 raise HTTPException(500, "The assistant hit an error. Please try again.")
             snapshot = graph.get_state(cfg)
             repo.touch_thread(thread.id, title)
-            new = [m for m in serialize(snapshot.values.get("messages", [])[before:])
-                   if m["role"] == "assistant"]
+            messages = snapshot.values.get("messages", [])
+            first_new = len(serialize(messages[:before]))
+            new = [m for m in serialize(messages)[first_new:] if m["role"] == "assistant"]
             return {"messages": new, "interrupt": pending_question(snapshot)}
         finally:
             lock.release()
@@ -162,7 +173,17 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
         snapshot = graph.get_state(run_config(thread))
         return {"thread": thread_json(thread),
                 "messages": serialize(snapshot.values.get("messages", [])),
-                "interrupt": pending_question(snapshot)}
+                "interrupt": pending_question(snapshot),
+                "feedback": {str(i): r for i, r in repo.get_feedback(thread.id).items()}}
+
+    @app.post("/api/threads/{thread_id}/feedback", status_code=204)
+    def feedback(body: Feedback, thread: Thread = Depends(owned_thread)) -> None:
+        messages = serialize(graph.get_state(run_config(thread)).values.get("messages", []))
+        if not (0 <= body.message_index < len(messages)) or \
+                messages[body.message_index]["role"] != "assistant":
+            raise HTTPException(422, "message_index must point at an assistant reply.")
+        repo.set_feedback(thread.user_id, thread.id, body.message_index,
+                          1 if body.rating == "up" else -1, body.comment.strip()[:1000])
 
     @app.post("/api/threads/{thread_id}/messages")
     def post_message(

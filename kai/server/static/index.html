@@ -35,6 +35,9 @@
   .msg .files { color: var(--muted); font-size: 13px; margin-top: 4px; }
   .msg.error { color: var(--error); }
   .question { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .rate { display: flex; gap: 4px; margin-top: 6px; }
+  .rate button { padding: 2px 8px; font-size: 13px; color: var(--muted); }
+  .rate button.on { border-color: var(--accent); color: var(--accent); }
   form { display: flex; gap: 8px; padding: 12px 24px 20px; border-top: 1px solid var(--line); background: var(--panel); align-items: flex-end; }
   textarea { flex: 1; resize: none; min-height: 44px; max-height: 160px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
   #picked { color: var(--muted); font-size: 13px; padding: 0 24px; background: var(--panel); }
@@ -82,6 +85,7 @@
     set(v) { try { v ? localStorage.setItem("kai_token", v) : localStorage.removeItem("kai_token"); } catch {} },
   };
   let token = store.get(), current = null, busy = false;
+  const current_thread = () => current;
 
   async function api(path, opts = {}) {
     const res = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), Authorization: `Bearer ${token}` } });
@@ -105,7 +109,36 @@
     return html.replace(/\n/g, "<br>");
   }
 
-  function addMessage(m) {
+  function addRating(div, index, current) {
+    const row = document.createElement("div");
+    row.className = "rate";
+    const buttons = {};
+    for (const [rating, label, title] of [["up", "👍", "Helpful"], ["down", "👎", "Not helpful"]]) {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.title = title;
+      b.setAttribute("aria-label", title);
+      b.onclick = async () => {
+        let comment = "";
+        if (rating === "down") comment = window.prompt("What went wrong? (optional)") || "";
+        try {
+          await api(`/api/threads/${current_thread()}/feedback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message_index: index, rating, comment }),
+          });
+          for (const [r, btn] of Object.entries(buttons)) btn.classList.toggle("on", r === rating);
+        } catch (e) { showError(e); }
+      };
+      buttons[rating] = b;
+      row.appendChild(b);
+    }
+    if (current === 1) buttons.up.classList.add("on");
+    if (current === -1) buttons.down.classList.add("on");
+    div.appendChild(row);
+  }
+
+  function addMessage(m, rating) {
     const div = document.createElement("div");
     div.className = `msg ${m.role}`;
     div.dir = "auto";
@@ -116,6 +149,7 @@
       f.textContent = "Attached: " + m.attachments.join(", ");
       div.appendChild(f);
     }
+    if (m.role === "assistant" && Number.isInteger(m.index)) addRating(div, m.index, rating);
     $("log").appendChild(div);
     $("log").scrollTop = $("log").scrollHeight;
     return div;
@@ -164,7 +198,7 @@
     current = id;
     $("log").innerHTML = "";
     const data = await api(`/api/threads/${id}`);
-    data.messages.forEach(addMessage);
+    data.messages.forEach((m) => addMessage(m, (data.feedback || {})[m.index]));
     showQuestion(data.interrupt);
     await loadThreads();
   }
