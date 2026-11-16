@@ -1,0 +1,241 @@
+Order Date,Region,Product,Customer,Salesperson,Revenue,Cost,Quantity
+2025-11-24,UAE,Laptop,Nile Systems,Mona,"9,477.29","5,312.08",8
+2025-12-13,Oman,Monitor,Zayed Supplies,Omar,506.00,332.03,2
+2025-04-30,Kuwait,Laptop,Vertex LLC,Mona,"16,096.32","11,529.54",18
+2025-10-29,Egypt,Laptop,Future Tech,Youssef,"12,664.26","9,004.00",14
+2025-04-21,Egypt,Monitor,Delta Retail,Omar,943.92,699.94,4
+2025-11-06,Egypt,Laptop,Smart Office,Lina,"3,504.10","2,536.34",4
+2025-05-31,Oman,Tablet,Zayed Supplies,Mona,"1,108.80",914.66,3
+2025-05-29,UAE,Mouse,Delta Retail,Omar,293.11,136.96,9
+2025-07-06,Saudi Arabia,Tablet,Orion Group,Mona,"4,233.60","2,734.13",9
+2025-03-29,Kuwait,Mouse,Future Tech,Omar,400.14,202.66,13
+2025-11-24,Oman,Mouse,Orion Group,Ahmed,242.88,123.16,8
+2025-07-25,Egypt,Monitor,Gulf Mart,Lina,"2,454.10","1,899.70",11
+2025-07-22,Oman,Docking Station,Future Tech,Sara,682.88,511.07,5
+2025-10-03,Egypt,Headset,Zayed Supplies,Omar,985.21,561.50,12
+2025-03-12,Kuwait,Docking Station,Delta Retail,Ahmed,670.46,405.57,4
+2025-12-15,Qatar,Monitor,Palm Stores,Omar,"5,554.50","3,423.93",20
+2025-10-11,UAE,Monitor,Vertex LLC,Sara,"3,731.75","1,852.32",11
+2025-03-22,Qatar,Laptop,Nile Systems,Lina,"6,123.60","4,020.65",6
+2025-06-02,Oman,Mouse,Future Tech,Sara,158.40,91.07,6
+2025-09-08,UAE,Monitor,Orion Group,Sara,"2,360.00","1,342.13",8
+2025-10-18,UAE,Monitor,Smart Office,Ahmed,"5,923.31","2,995.70",18
+2025-09-01,Kuwait,Keyboard,Nile Systems,Lina,828.00,518.75,20
+2025-10-04,Oman,Mouse,Nile Systems,Omar,335.17,185.94,12
+2025-08-20,UAE,Mouse,Gulf Mart,Ahmed,389.40,166.84,11
+2025-04-28,Kuwait,Mouse,Al Noor Trading,Ahmed,62.86,29.24,2
+2025-01-17,Egypt,Monitor,Vertex LLC,Mona,"1,904.40","1,507.04",9
+2025-03-09,Oman,Docking Station,Gulf Mart,Omar,"2,065.03","1,367.24",14
+2025-12-04,Qatar,Tablet,Palm Stores,Omar,"7,607.25","4,577.11",15
+2025-11-27,UAE,Laptop,Palm Stores,Youssef,"13,434.30","7,059.95",11
+2025-04-08,Kuwait,Docking Station,Future Tech,Omar,984.96,601.43,6
+2025-02-08,Qatar,Monitor,Al Noor Trading,Youssef,"4,725.00","3,175.76",18
+2025-05-02,Saudi Arabia,Headset,Smart Office,Omar,577.02,325.45,7
+2025-03-26,Qatar,Laptop,Palm Stores,Sara,"14,543.55","9,746.20",15
+2025-10-12,Oman,Docking Station,Future Tech,Mona,"1,570.62","1,037.81",10
+2025-10-24,Oman,Laptop,Orion Group,Ahmed,"1,675.87","1,306.76",2
+2025-09-29,Saudi Arabia,Laptop,Vertex LLC,Ahmed,"6,048.00","3,945.44",6
+2025-12-12,Saudi Arabia,Headset,Delta Retail,Lina,824.32,364.81,8
+2025-08-03,Oman,Tablet,Nile Systems,Mona,"3,943.63","3,262.36",11
+2025-03-09,Oman,Printer,Smart Office,Sara,513.22,360.75,3
+2025-10-16,UAE,Monitor,Vertex LLC,Mona,"5,478.89","2,830.10",17
+2025-06-28,UAE,Mouse,Orion Group,Sara,195.41,92.55,6
+2025-12-27,Egypt,Laptop,Vertex LLC,Sara,"3,694.54","2,570.13",4
+2025-02-24,Oman,Keyboard,Nile Systems,Sara,768.24,510.12,20
+2025-04-15,Oman,Printer,Vertex LLC,Omar,"1,539.65","1,054.58",9
+2025-08-05,Egypt,Laptop,Al Noor Trading,Sara,"3,933.00","3,189.26",5
+2025-08-15,Kuwait,Headset,Vertex LLC,Ahmed,320.00,186.51,4
+2025-12-20,Saudi Arabia,Laptop,Orion Group,Lina,"20,239.63","11,701.00",18
+2025-01-22,Egypt,Tablet,Al Noor Trading,Sara,"2,623.66","2,135.04",7
+2025-07-01,Kuwait,Headset,Zayed Supplies,Youssef,388.00,231.87,5
+2025-04-01,Qatar,Laptop,Future Tech,Youssef,"10,328.47","7,337.02",11
+2025-05-08,Egypt,Keyboard,Delta Retail,Omar,76.18,49.28,2
+2025-08-24,Egypt,Printer,Gulf Mart,Mona,160.63,119.75,1
+2025-05-23,UAE,Printer,Orion Group,Youssef,"3,321.94","2,075.84",17
+2025-10-02,Egypt,Laptop,Delta Retail,Sara,"5,427.54","3,793.44",6
+2025-11-02,Qatar,Tablet,Orion Group,Omar,"10,143.00","5,981.78",20
+2025-10-23,Saudi Arabia,Printer,Al Noor Trading,Youssef,"3,245.76","1,690.74",14
+2025-10-03,Oman,Mouse,Orion Group,Omar,86.53,45.61,3
+2025-12-06,UAE,Printer,Vertex LLC,Sara,"3,248.66","1,676.92",14
+2025-06-01,Kuwait,Keyboard,Gulf Mart,Omar,567.45,329.25,13
+2025-06-04,Qatar,Laptop,Nile Systems,Sara,"6,085.80","4,663.76",7
+2025-11-07,Oman,Tablet,Smart Office,Omar,"6,184.33","4,526.02",15
+2025-03-28,Oman,Monitor,Nile Systems,Lina,"4,514.40","3,320.23",20
+2025-05-01,Oman,Printer,Gulf Mart,Mona,792.00,583.94,5
+2025-09-01,Kuwait,Monitor,Smart Office,Omar,"4,607.50","3,295.52",19
+2025-07-16,Qatar,Headset,Gulf Mart,Mona,84.00,46.10,1
+2025-04-23,Saudi Arabia,Docking Station,Al Noor Trading,Lina,"1,548.29",801.56,8
+2025-08-26,Oman,Tablet,Smart Office,Lina,"5,780.54","5,243.51",17
+2025-10-08,Qatar,Keyboard,Smart Office,Omar,474.37,231.48,9
+2025-05-22,Kuwait,Docking Station,Gulf Mart,Sara,"2,400.00","1,529.92",15
+2025-05-01,Egypt,Tablet,Orion Group,Lina,"1,124.42",882.50,3
+2025-07-16,Oman,Keyboard,Gulf Mart,Ahmed,510.05,347.61,14
+2025-08-27,Qatar,Laptop,Gulf Mart,Omar,"12,285.00","8,703.26",13
+2025-10-22,Qatar,Docking Station,Al Noor Trading,Sara,"1,777.44","1,029.74",10
+2025-08-03,Kuwait,Mouse,Smart Office,Mona,248.40,135.54,9
+2025-07-19,Egypt,Headset,Future Tech,Omar,368.00,232.53,5
+2025-10-31,Kuwait,Laptop,Delta Retail,Youssef,"14,055.30","9,379.18",14
+2025-04-04,UAE,Printer,Palm Stores,Sara,"1,477.28",834.02,7
+2025-07-14,Egypt,Headset,Nile Systems,Ahmed,"1,177.60",736.15,16
+2025-01-27,Egypt,Mouse,Delta Retail,Youssef,55.20,31.09,2
+2025-04-13,UAE,Keyboard,Gulf Mart,Mona,917.57,403.79,16
+2025-04-22,Qatar,Printer,Orion Group,Mona,"4,082.40","2,458.67",20
+2025-03-25,Egypt,Monitor,Zayed Supplies,Ahmed,"2,285.28","1,696.20",10
+2025-04-12,UAE,Mouse,Delta Retail,Youssef,382.32,153.86,10
+2025-10-17,UAE,Tablet,Vertex LLC,Omar,"6,839.28","3,619.50",12
+2025-06-24,UAE,Headset,Smart Office,Ahmed,"1,255.52",639.13,14
+2025-08-24,Oman,Keyboard,Palm Stores,Mona,639.54,430.57,17
+2025-10-03,Qatar,Docking Station,Palm Stores,Youssef,"3,487.26","1,885.87",19
+2025-05-06,UAE,Printer,Smart Office,Mona,"2,931.12","1,788.39",15
+2025-09-11,Egypt,Keyboard,Smart Office,Mona,471.96,298.15,12
+2025-11-02,Oman,Printer,Vertex LLC,Ahmed,"3,003.82","1,991.03",17
+2025-07-28,Qatar,Mouse,Smart Office,Youssef,463.68,246.12,16
+2025-02-17,Egypt,Mouse,Palm Stores,Youssef,209.76,121.98,8
+2025-07-08,Qatar,Tablet,Palm Stores,Youssef,"7,541.10","5,370.98",18
+2025-08-21,Egypt,Printer,Nile Systems,Mona,642.53,476.20,4
+2025-10-02,Oman,Keyboard,Gulf Mart,Mona,692.21,408.29,16
+2025-09-26,Kuwait,Printer,Delta Retail,Mona,"1,746.00","1,194.31",10
+2025-06-04,UAE,Keyboard,Nile Systems,Ahmed,100.89,50.94,2
+2025-03-06,Oman,Docking Station,Delta Retail,Ahmed,"2,744.76","1,905.43",19
+2025-08-14,Egypt,Keyboard,Al Noor Trading,Sara,662.40,411.02,16
+2025-07-25,Qatar,Monitor,Zayed Supplies,Youssef,509.25,333.35,2
+2025-10-16,Egypt,Monitor,Gulf Mart,Ahmed,"4,380.12","3,098.07",18
+2025-11-13,Saudi Arabia,Headset,Smart Office,Omar,947.97,446.12,10
+2025-11-14,UAE,Monitor,Gulf Mart,Youssef,"2,256.01","1,209.31",7
+2025-03-22,Saudi Arabia,Keyboard,Vertex LLC,Ahmed,326.59,149.79,6
+2025-12-19,Kuwait,Docking Station,Nile Systems,Ahmed,"1,398.40",815.59,8
+2025-12-26,Qatar,Monitor,Gulf Mart,Sara,"5,563.56","3,229.22",19
+2025-10-06,Saudi Arabia,Keyboard,Nile Systems,Mona,173.88,73.62,3
+2025-06-07,Kuwait,Printer,Smart Office,Ahmed,"2,565.00","1,834.17",15
+2025-05-20,Kuwait,Docking Station,Smart Office,Ahmed,"3,200.00","2,064.52",20
+2025-06-15,Kuwait,Printer,Al Noor Trading,Ahmed,"1,440.00",998.37,8
+2025-12-11,Egypt,Laptop,Future Tech,Omar,"14,892.41","11,427.08",17
+2025-04-03,Kuwait,Headset,Smart Office,Ahmed,"1,313.28",718.98,16
+2025-06-14,Oman,Monitor,Future Tech,Sara,"2,833.60","2,356.62",14
+2025-07-25,Kuwait,Laptop,Smart Office,Ahmed,"9,405.00","7,097.30",11
+2025-07-26,Kuwait,Laptop,Vertex LLC,Omar,"12,600.00","8,946.49",14
+2025-07-05,Kuwait,Docking Station,Smart Office,Ahmed,"1,064.00",705.91,7
+2025-05-28,Qatar,Docking Station,Delta Retail,Ahmed,"3,259.20","2,039.37",20
+2025-06-09,Kuwait,Laptop,Vertex LLC,Omar,"2,619.00","2,026.94",3
+2025-02-28,Qatar,Monitor,Future Tech,Omar,"2,493.75","1,698.44",10
+2025-09-05,Qatar,Mouse,Smart Office,Lina,144.90,73.75,5
+2025-11-03,Kuwait,Keyboard,Delta Retail,Sara,688.27,362.39,14
+2025-09-17,Egypt,Laptop,Nile Systems,Youssef,"7,617.60","6,698.69",10
+2025-08-17,Kuwait,Docking Station,Orion Group,Sara,"2,649.60","1,803.37",18
+2025-06-14,Saudi Arabia,Mouse,Zayed Supplies,Omar,247.30,116.77,8
+2025-08-31,Oman,Headset,Palm Stores,Youssef,323.84,233.45,5
+2025-03-06,Kuwait,Tablet,Delta Retail,Omar,"1,669.25","1,165.29",4
+2025-03-15,Qatar,Keyboard,Delta Retail,Omar,436.31,228.07,9
+2025-07-23,Oman,Monitor,Orion Group,Youssef,"3,643.20","3,172.58",18
+2025-11-17,Oman,Docking Station,Vertex LLC,Ahmed,"3,238.40","1,972.87",20
+2025-12-17,Egypt,Mouse,Delta Retail,Omar,126.96,60.06,4
+2025-12-22,Egypt,Laptop,Al Noor Trading,Sara,"1,809.18","1,293.62",2
+2025-08-09,Saudi Arabia,Mouse,Vertex LLC,Omar,619.25,279.84,19
+2025-02-10,Kuwait,Headset,Zayed Supplies,Youssef,588.80,372.20,8
+2025-03-15,Saudi Arabia,Docking Station,Nile Systems,Omar,"1,741.82",929.63,9
+2025-08-27,Egypt,Keyboard,Delta Retail,Omar,471.96,304.42,12
+2025-08-06,Oman,Printer,Smart Office,Sara,"1,020.10",864.98,7
+2025-02-24,Saudi Arabia,Headset,Zayed Supplies,Sara,"1,617.28",888.76,19
+2025-06-01,UAE,Headset,Nile Systems,Ahmed,"1,793.60",883.85,19
+2025-09-12,Egypt,Mouse,Zayed Supplies,Sara,214.18,121.62,8
+2025-12-14,Oman,Keyboard,Delta Retail,Youssef,86.53,51.26,2
+2025-01-18,Kuwait,Tablet,Future Tech,Ahmed,"3,990.00","3,066.97",10
+2025-03-31,Saudi Arabia,Keyboard,Vertex LLC,Sara,879.08,436.96,17
+2025-05-12,Qatar,Printer,Orion Group,Ahmed,"2,835.00","1,763.74",15
+2025-04-26,Oman,Headset,Vertex LLC,Sara,209.85,131.08,3
+2025-10-02,UAE,Docking Station,Orion Group,Youssef,"1,797.75",924.81,9
+2025-07-10,UAE,Mouse,Smart Office,Ahmed,672.60,310.22,20
+2025-04-24,Oman,Monitor,Smart Office,Youssef,"2,185.92","1,662.88",10
+2025-01-24,UAE,Printer,Smart Office,Ahmed,824.11,495.41,4
+2025-03-11,Qatar,Docking Station,Orion Group,Youssef,"3,004.65","1,820.00",18
+2025-03-21,Qatar,Monitor,Smart Office,Lina,"3,770.55","2,314.05",14
+2025-07-09,Saudi Arabia,Docking Station,Smart Office,Mona,"2,150.40","1,246.40",12
+2025-07-08,Kuwait,Tablet,Al Noor Trading,Omar,"3,666.60","2,801.99",9
+2025-08-21,UAE,Mouse,Zayed Supplies,Ahmed,67.26,29.61,2
+2025-03-06,Kuwait,Mouse,Delta Retail,Lina,220.00,107.83,7
+2025-04-30,Egypt,Keyboard,Zayed Supplies,Ahmed,390.34,233.80,9
+2025-10-04,Egypt,Keyboard,Delta Retail,Youssef,46.18,24.28,1
+2025-05-02,Kuwait,Tablet,Al Noor Trading,Mona,"3,780.00","2,642.96",9
+2025-08-04,Kuwait,Monitor,Delta Retail,Omar,"3,562.50","2,565.11",15
+2025-02-25,Qatar,Mouse,Zayed Supplies,Ahmed,508.72,255.53,17
+2025-01-16,UAE,Docking Station,Palm Stores,Omar,694.78,407.95,4
+2025-08-16,UAE,Monitor,Orion Group,Lina,"1,475.00",832.01,5
+2025-11-16,Oman,Tablet,Palm Stores,Lina,"6,864.40","5,108.98",17
+2025-11-06,Qatar,Monitor,Delta Retail,Youssef,"5,270.74","3,060.32",18
+2025-04-27,Qatar,Tablet,Smart Office,Omar,"6,667.92","4,165.89",14
+2025-06-10,Oman,Printer,Orion Group,Mona,"2,534.40","1,874.66",16
+2025-02-13,UAE,Headset,Delta Retail,Youssef,"1,098.82",544.83,12
+2025-10-28,Kuwait,Tablet,Delta Retail,Omar,"5,332.32","3,710.76",12
+2025-01-27,Egypt,Printer,Orion Group,Ahmed,"3,052.01","2,236.29",19
+2025-09-04,Saudi Arabia,Monitor,Orion Group,Lina,"3,360.00","2,087.70",12
+2025-10-21,Saudi Arabia,Headset,Vertex LLC,Lina,"2,060.80",911.37,20
+2025-12-03,Oman,Printer,Al Noor Trading,Mona,"1,557.47","1,117.27",9
+2025-06-29,UAE,Keyboard,Future Tech,Lina,690.30,318.48,13
+2025-11-21,UAE,Monitor,Vertex LLC,Mona,"4,057.43","2,213.88",13
+2025-03-22,Egypt,Printer,Orion Group,Lina,"3,576.96","2,476.40",20
+2025-03-21,Saudi Arabia,Laptop,Delta Retail,Sara,"15,023.23","9,788.96",15
+2025-08-15,Qatar,Printer,Gulf Mart,Lina,718.20,480.05,4
+2025-05-26,Oman,Docking Station,Vertex LLC,Youssef,"1,408.00",985.44,10
+2025-11-03,UAE,Laptop,Gulf Mart,Sara,"8,292.63","4,656.89",7
+2025-05-29,Egypt,Monitor,Al Noor Trading,Omar,"3,123.40","2,330.12",14
+2025-09-30,Oman,Mouse,Vertex LLC,Lina,316.80,179.60,12
+2025-01-22,Qatar,Laptop,Smart Office,Ahmed,"9,563.40","7,222.49",11
+2025-12-30,Oman,Headset,Nile Systems,Ahmed,"1,052.48",607.02,13
+2025-03-29,Kuwait,Docking Station,Orion Group,Ahmed,"2,419.20","1,381.85",14
+2025-10-29,Qatar,Monitor,Palm Stores,Sara,"3,221.01","1,857.50",11
+2025-03-28,UAE,Monitor,Vertex LLC,Lina,"2,118.69","1,183.55",7
+2025-11-27,Saudi Arabia,Mouse,Delta Retail,Mona,337.33,132.59,9
+2025-03-20,Oman,Monitor,Future Tech,Youssef,"3,497.47","2,782.05",16
+2025-10-24,Qatar,Tablet,Orion Group,Mona,"7,607.25","4,512.71",15
+2025-11-20,Egypt,Printer,Zayed Supplies,Ahmed,"2,285.28","1,428.09",12
+2025-08-20,UAE,Laptop,Orion Group,Sara,"3,186.00","1,975.45",3
+2025-09-17,Qatar,Docking Station,Zayed Supplies,Lina,309.12,206.73,2
+2025-10-20,Oman,Mouse,Orion Group,Lina,471.19,248.89,16
+2025-08-19,UAE,Tablet,Delta Retail,Lina,"2,973.60","1,777.22",6
+2025-08-13,Qatar,Keyboard,Orion Group,Sara,434.70,249.65,10
+2025-06-23,Oman,Laptop,Orion Group,Ahmed,"8,712.00","7,214.76",11
+2025-07-17,Egypt,Printer,Zayed Supplies,Mona,"1,821.60","1,334.25",11
+2025-03-14,Egypt,Printer,Palm Stores,Mona,"3,576.96","2,380.01",20
+2025-07-12,Oman,Tablet,Future Tech,Youssef,"6,283.20","5,177.63",17
+2025-08-05,Kuwait,Tablet,Al Noor Trading,Sara,"4,074.00","3,109.75",10
+2025-06-24,Qatar,Mouse,Gulf Mart,Mona,157.50,74.30,5
+2025-02-21,Kuwait,Laptop,Orion Group,Lina,"4,140.00","3,187.59",5
+2025-04-03,Oman,Keyboard,Smart Office,Ahmed,568.81,356.07,14
+2025-05-02,Qatar,Printer,Smart Office,Mona,"3,299.94","2,141.99",18
+2025-08-29,Saudi Arabia,Tablet,Zayed Supplies,Omar,"6,703.20","4,610.11",15
+2025-09-15,Kuwait,Headset,Future Tech,Mona,"1,552.00",928.00,20
+2025-01-27,Oman,Docking Station,Orion Group,Lina,563.20,395.98,4
+2025-03-24,Egypt,Docking Station,Vertex LLC,Mona,"2,225.66","1,450.75",14
+2025-04-24,Qatar,Tablet,Al Noor Trading,Omar,876.36,603.08,2
+2025-05-01,Qatar,Monitor,Orion Group,Mona,249.38,175.98,1
+2025-11-29,Egypt,Keyboard,Future Tech,Ahmed,438.01,254.68,10
+2025-03-13,Oman,Docking Station,Smart Office,Lina,152.06,97.13,1
+2025-04-21,Saudi Arabia,Headset,Delta Retail,Sara,735.44,352.27,8
+2025-05-03,Qatar,Docking Station,Delta Retail,Ahmed,"2,688.00","1,622.78",16
+2025-10-22,Saudi Arabia,Keyboard,Nile Systems,Omar,55.06,24.67,1
+2025-08-02,Saudi Arabia,Monitor,Vertex LLC,Sara,840.00,508.64,3
+2025-08-29,UAE,Headset,Orion Group,Sara,89.68,46.13,1
+2025-06-26,Saudi Arabia,Monitor,Zayed Supplies,Youssef,"2,987.60","1,819.70",11
+2025-10-07,Egypt,Keyboard,Smart Office,Youssef,738.91,410.72,16
+2025-02-02,Oman,Docking Station,Al Noor Trading,Sara,985.60,717.76,7
+2025-01-22,Egypt,Printer,Vertex LLC,Omar,"2,742.34","2,133.50",18
+2025-11-28,Saudi Arabia,Printer,Orion Group,Ahmed,"2,422.73","1,291.90",11
+2025-07-08,Qatar,Headset,Smart Office,Omar,896.28,497.34,11
+2025-09-12,Egypt,Printer,Delta Retail,Youssef,"2,318.40","1,680.24",14
+2025-04-03,Kuwait,Printer,Orion Group,Ahmed,554.04,365.86,3
+2025-06-06,Qatar,Headset,Future Tech,Youssef,"1,197.00",675.88,15
+2025-06-30,Kuwait,Headset,Nile Systems,Youssef,160.00,91.53,2
+2025-07-27,Egypt,Keyboard,Al Noor Trading,Mona,761.76,486.22,20
+2025-02-04,Saudi Arabia,Tablet,Orion Group,Omar,"8,937.60","5,770.43",19
+2025-12-14,Qatar,Tablet,Orion Group,Omar,"1,475.81",906.36,3
+2025-07-23,Egypt,Printer,Gulf Mart,Ahmed,160.63,120.59,1
+2025-07-18,Kuwait,Monitor,Nile Systems,Sara,"3,637.50","2,651.35",15
+2025-05-27,Oman,Docking Station,Gulf Mart,Ahmed,704.00,500.82,5
+2025-08-16,UAE,Tablet,Orion Group,Youssef,"1,412.46",929.15,3
+2025-03-22,Oman,Keyboard,Orion Group,Lina,342.14,207.79,8
+2025-03-13,Saudi Arabia,Docking Station,Al Noor Trading,Sara,"3,309.47","1,804.89",18
+2025-10-10,Saudi Arabia,Monitor,Delta Retail,Sara,"3,851.12","2,225.03",13
+2025-07-29,Kuwait,Monitor,Future Tech,Sara,690.00,511.33,3
+2025-09-22,Egypt,Keyboard,Vertex LLC,Youssef,763.00,486.28,19
+2025-03-08,Qatar,Laptop,Delta Retail,Lina,"4,847.85","3,189.96",5
+2025-06-15,Oman,Mouse,Orion Group,Lina,264.00,148.13,10

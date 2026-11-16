@@ -1,0 +1,7 @@
+app_id: aws-credentials
+spec_version: v1
+kind: connection
+environments:
+  draft:
+    kind: key_value
+    type: team

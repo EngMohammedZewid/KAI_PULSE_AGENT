@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: Translate To Arabic API
+  version: 1.0.0
+  description: |
+    OpenAPI definition for translating input text to Arabic.
+    This spec targets LibreTranslate-compatible APIs.
+servers:
+  - url: https://libretranslate.com
+    description: Public LibreTranslate server
+paths:
+  /translate:
+    post:
+      operationId: translate_to_arabic
+      summary: Translate text to Arabic
+      description: Translate user input text to Arabic.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - q
+              properties:
+                q:
+                  type: string
+                  description: Text to translate.
+                  example: Hello, how are you?
+                source:
+                  type: string
+                  description: Source language code. Use auto to detect automatically.
+                  default: auto
+                  example: auto
+                target:
+                  type: string
+                  description: Target language code.
+                  default: ar
+                  enum:
+                    - ar
+                  example: ar
+                format:
+                  type: string
+                  description: Input text format.
+                  default: text
+                  enum:
+                    - text
+                    - html
+                api_key:
+                  type: string
+                  description: Optional API key if the selected server requires one.
+            examples:
+              default:
+                value:
+                  q: Hello, how are you?
+                  source: auto
+                  target: ar
+                  format: text
+      responses:
+        '200':
+          description: Successful translation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  translatedText:
+                    type: string
+                    description: Translated Arabic text.
+                    example: مرحبا، كيف حالك؟
+        '400':
+          description: Invalid request.
+        '401':
+          description: Unauthorized (API key missing or invalid).
+        '429':
+          description: Rate limited.
+        '500':
+          description: Translation service error.

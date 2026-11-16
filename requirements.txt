@@ -1,0 +1,19 @@
+ibm-watsonx-orchestrate>=2.8.0
+python-dotenv>=1.0.0
+openpyxl>=3.1.0           # Read .xlsx files for chart tools
+
+# Database drivers (install the one matching your DB_TYPE)
+sqlalchemy>=2.0
+psycopg2-binary>=2.9      # PostgreSQL (default)
+pymysql>=1.1              # MySQL  (optional)
+pymongo>=4.6              # MongoDB (optional)
+reportlab>=4.0            # PDF export — Unicode/Arabic via TTF fonts (Amiri)
+python-docx>=1.1.0        # Word (.docx) export
+arabic-reshaper>=3.0.0    # Reshape Arabic characters for correct PDF rendering
+python-bidi>=0.4.2        # BiDi algorithm for RTL Arabic text layout
+plotly>=6.0                  # Interactive chart generation
+google-generativeai>=0.8.4  # Gemini API client
+ibm-watsonx-ai>=1.5.0       # IBM watsonx.ai SDK (Llama, etc.)
+requests>=2.31.0          # HTTP client for Cognos REST API tools
+sendgrid>=6.12.5          # SendGrid email API for standalone file delivery tool
+# sqlite3 is part of the Python standard library – no install needed

@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+node_modules/
+
+# Conversation data and generated output (may contain personal data)
+*.db
+agent_list.json
+last_payload_*.json
+payload_*.json
+session_history_payload.json
+session_history_summary.*
+*_Conversation_Summary.pdf
+test_*.pdf
