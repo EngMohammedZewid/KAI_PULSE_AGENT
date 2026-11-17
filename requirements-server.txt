@@ -6,6 +6,7 @@ psycopg[binary]>=3.2
 psycopg-pool>=3.2
 langgraph-checkpoint-postgres>=2
 langchain-ibm                   # GPT-OSS 120B on watsonx.ai (KAI_MODEL_PROVIDER=watsonx)
+langchain-anthropic             # Anthropic-compatible endpoints, e.g. Qwen on Model Studio (KAI_MODEL_PROVIDER=anthropic)
 
 # Tests only
 httpx>=0.27                     # FastAPI TestClient
