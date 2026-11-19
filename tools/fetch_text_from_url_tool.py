@@ -11,6 +11,7 @@ from __future__ import annotations
 import urllib.error
 import urllib.request
 
+from tools._safe_fetch import UnsafeURL, fetch
 from tools._tooling import tool
 
 
@@ -43,12 +44,8 @@ def fetch_text_from_url(
         return "url is required."
 
     try:
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "watsonx-orchestrate-agent/1.0"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            raw = resp.read()
+        # Public addresses only: the URL comes from the model or the user.
+        raw, _ = fetch(url, timeout=30)
 
         # Decode — try UTF-8 then fall back to latin-1
         try:
@@ -62,6 +59,8 @@ def fetch_text_from_url(
 
         return text
 
+    except UnsafeURL as e:
+        return f"Cannot fetch this URL: {e}"
     except urllib.error.HTTPError as e:
         return f"HTTP error {e.code} fetching URL: {e.reason}"
     except urllib.error.URLError as e:

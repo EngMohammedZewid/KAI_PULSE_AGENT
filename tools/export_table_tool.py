@@ -24,6 +24,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Union
 
+from tools._settings import require_bucket
 from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
@@ -41,7 +42,7 @@ def _s3_env() -> tuple:
     return (
         g("AWS_ACCESS_KEY_ID",     ""),
         g("AWS_SECRET_ACCESS_KEY", ""),
-        g("AWS_S3_BUCKET",         "aws-buc-for-orchestrate"),
+        require_bucket(g("AWS_S3_BUCKET")),
         g("AWS_S3_REGION",         "us-east-2"),
     )
 
@@ -306,7 +307,10 @@ def export_table_to_file(
         return f"Failed to generate {fmt.upper()} file: {e}"
 
     # --- S3 upload ---
-    ak, sk, bucket, region = _s3_env()
+    try:
+        ak, sk, bucket, region = _s3_env()
+    except RuntimeError as e:
+        return f"{fmt.upper()} file generated but not uploaded: {e}"
     base = (filename.strip() or "export")
     # sanitise filename
     base = re.sub(r"[^\w\-]", "_", base)

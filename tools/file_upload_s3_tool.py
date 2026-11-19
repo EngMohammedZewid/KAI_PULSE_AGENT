@@ -23,6 +23,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from tools._settings import require_bucket
 from tools._tooling import tool
 
 
@@ -52,7 +53,7 @@ def _s3_env() -> tuple[str, str, str, str]:
         )
     access_key = g("AWS_ACCESS_KEY_ID",     "")
     secret_key = g("AWS_SECRET_ACCESS_KEY", "")
-    bucket     = g("AWS_S3_BUCKET",         "aws-buc-for-orchestrate")
+    bucket     = require_bucket(g("AWS_S3_BUCKET"))
     region     = g("AWS_S3_REGION",         "us-east-2")
     return access_key, secret_key, bucket, region
 

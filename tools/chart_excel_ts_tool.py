@@ -69,9 +69,9 @@ def _period_key(dt, period: str) -> str:
 def _load_workbook(file_path: str) -> openpyxl.Workbook:
     """Open an Excel workbook from a local path OR an http(s) URL."""
     if file_path.startswith("http://") or file_path.startswith("https://"):
-        req = urllib.request.Request(file_path, headers={"User-Agent": "watsonx-orchestrate-agent/1.0"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = resp.read()
+        from tools._safe_fetch import fetch  # public addresses only
+
+        data, _ = fetch(file_path, timeout=30)
         return openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     return openpyxl.load_workbook(file_path, read_only=True, data_only=True)
 

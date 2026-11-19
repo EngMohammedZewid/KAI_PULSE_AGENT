@@ -27,6 +27,8 @@ import urllib.request
 from email.message import EmailMessage
 from typing import Any, Dict, List, Optional
 
+from tools._safe_fetch import fetch as safe_fetch
+from tools._settings import require_bucket
 from tools._tooling import tool
 
 
@@ -118,7 +120,7 @@ def _s3_env() -> tuple:
     return (
         g("AWS_ACCESS_KEY_ID",     ""),
         g("AWS_SECRET_ACCESS_KEY", ""),
-        g("AWS_S3_BUCKET",         "aws-buc-for-orchestrate"),
+        require_bucket(g("AWS_S3_BUCKET")),
         g("AWS_S3_REGION",         "us-east-2"),
     )
 
@@ -221,7 +223,7 @@ def _sendgrid_env() -> tuple[str, str, str]:
     return (
         g("SENDGRID_API_KEY"),
         g("SENDGRID_FROM_EMAIL"),
-        g("SENDGRID_FROM_NAME", "watsonx Orchestrate"),
+        g("SENDGRID_FROM_NAME", "KAI Pulse"),
     )
 
 
@@ -534,11 +536,12 @@ class _PDF:
         self._cy -= 6
 
     def image(self, url: str, caption: str = "") -> None:
-        """Download url and embed the image, scaled to fit page width."""
+        """Download url and embed the image, scaled to fit page width.
+
+        Only from trusted chart/storage hosts (see tools/_safe_fetch.py): the
+        URL comes from model-written content."""
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                img_bytes = resp.read()
+            img_bytes, _ = safe_fetch(url, trusted_only=True, timeout=30)
         except Exception as exc:
             self.paragraph(f"[Chart could not be loaded: {str(exc)[:80]}]",
                            size=8.5, color=(0.5, 0.3, 0.0))
