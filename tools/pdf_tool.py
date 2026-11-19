@@ -1239,10 +1239,10 @@ _MD_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((https?://\S+)\)")
 
 
 def _download_image(url: str) -> bytes:
-    """Fetch an image for embedding (same source rules and timeout as the PDF builder)."""
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read()
+    """Fetch an image for embedding: trusted chart/storage hosts only, like the
+    PDF builder (the URL comes from model-written content)."""
+    body, _ = safe_fetch(url, trusted_only=True, timeout=30)
+    return body
 
 
 def _build_docx(title: str, content: str, subtitle: str = "",

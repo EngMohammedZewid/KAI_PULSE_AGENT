@@ -91,6 +91,17 @@ class ToolsUseSafeFetchTests(unittest.TestCase):
         pdf = pdf_tool._build_pdf("Report", "![x](http://169.254.169.254/latest/meta-data/iam)")
         self.assertTrue(pdf.startswith(b"%PDF"))
 
+    def test_word_image_from_internal_address_is_not_downloaded(self):
+        import io
+
+        from docx import Document
+
+        from tools import pdf_tool
+
+        doc = Document(io.BytesIO(pdf_tool._build_docx("Report", "![x](http://169.254.169.254/latest/meta-data/)")))
+        self.assertEqual(len(doc.inline_shapes), 0)
+        self.assertIn("Chart could not be loaded", "\n".join(p.text for p in doc.paragraphs))
+
     def test_email_attachment_must_come_from_trusted_storage(self):
         from tools.sendgrid_email_tool import _download_file
 
