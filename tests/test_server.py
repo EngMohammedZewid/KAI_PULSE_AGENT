@@ -75,6 +75,7 @@ class AuthTests(ServerTestCase):
         page = self.client.get("/")
         self.assertEqual(page.status_code, 200)
         self.assertIn("KAI Pulse", page.text)
+        self.assertEqual(page.headers["cache-control"], "no-cache")
 
 
 class ConversationTests(ServerTestCase):

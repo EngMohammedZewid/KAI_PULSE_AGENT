@@ -46,6 +46,18 @@ class PostgresTests(unittest.TestCase):
         self.assertIsNone(self.repo.get_thread(bob.id, t.id))
         self.assertEqual([x.id for x in self.repo.list_threads(alice.id)], [t.id])
 
+    def test_feedback_and_disable(self):
+        user, token = self.repo.create_user("Erin " + uuid.uuid4().hex[:6])
+        t = self.repo.create_thread(user.id)
+        self.repo.set_feedback(user.id, t.id, 1, -1, "wrong total")
+        self.repo.set_feedback(user.id, t.id, 1, 1)          # same reply: rating replaced
+        self.repo.set_feedback(user.id, t.id, 3, -1, "too slow")
+        self.assertEqual(self.repo.get_feedback(t.id), {1: 1, 3: -1})
+        self.assertIn("too slow", self.repo.feedback_summary()["down_comments"])
+        self.assertTrue(self.repo.disable_user(user.id))
+        self.assertIsNone(self.repo.user_for_token(token))
+        self.assertTrue(any(u.id == user.id and u.disabled for u in self.repo.list_users()))
+
     def test_conversation_survives_a_new_graph(self):
         """State saved by one graph instance is read back by a fresh one (like a restart)."""
         from kai.graph import build_graph

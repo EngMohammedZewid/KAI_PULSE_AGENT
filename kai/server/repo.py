@@ -34,6 +34,10 @@ def _now() -> datetime:
 class User:
     id: str
     name: str
+    disabled: bool = False
+
+
+Rating = int  # +1 thumbs up, -1 thumbs down
 
 
 @dataclass
@@ -52,6 +56,22 @@ class Repo(Protocol):
     def get_thread(self, user_id: str, thread_id: str) -> Optional[Thread]: ...
     def list_threads(self, user_id: str) -> list[Thread]: ...
     def touch_thread(self, thread_id: str, title: Optional[str] = None) -> None: ...
+    # Pilot management
+    def list_users(self) -> list[User]: ...
+    def disable_user(self, user_id: str) -> bool: ...
+    def set_feedback(self, user_id: str, thread_id: str, message_index: int,
+                     rating: Rating, comment: str = "") -> None: ...
+    def get_feedback(self, thread_id: str) -> dict[int, Rating]: ...
+    def feedback_summary(self) -> dict: ...
+
+
+def _summary(rows: list[tuple[str, int, str]]) -> dict:
+    """rows: (thread_id, rating, comment) -> counts and the latest comments on thumbs down."""
+    up = sum(1 for _, r, _ in rows if r > 0)
+    down = sum(1 for _, r, _ in rows if r < 0)
+    return {"up": up, "down": down, "total": up + down,
+            "down_rate": round(down / (up + down), 3) if up + down else 0.0,
+            "down_comments": [c for _, r, c in rows if r < 0 and c][-20:]}
 
 
 class MemoryRepo:
@@ -60,6 +80,26 @@ class MemoryRepo:
         self._users: dict[str, User] = {}
         self._tokens: dict[str, str] = {}      # token hash -> user id
         self._threads: dict[str, Thread] = {}
+        self._feedback: dict[tuple[str, int], tuple[str, int, str]] = {}  # (thread, idx) -> (user, rating, comment)
+
+    def list_users(self) -> list[User]:
+        return list(self._users.values())
+
+    def disable_user(self, user_id: str) -> bool:
+        user = self._users.get(user_id)
+        if user:
+            user.disabled = True
+        return user is not None
+
+    def set_feedback(self, user_id, thread_id, message_index, rating, comment=""):
+        with self._lock:
+            self._feedback[(thread_id, message_index)] = (user_id, rating, comment)
+
+    def get_feedback(self, thread_id: str) -> dict[int, Rating]:
+        return {i: r for (t, i), (_, r, _) in self._feedback.items() if t == thread_id}
+
+    def feedback_summary(self) -> dict:
+        return _summary([(t, r, c) for (t, _), (_, r, c) in self._feedback.items()])
 
     def create_user(self, name: str) -> tuple[User, str]:
         user, token = User(id=uuid.uuid4().hex, name=name), new_token()
@@ -70,7 +110,8 @@ class MemoryRepo:
 
     def user_for_token(self, token: str) -> Optional[User]:
         user_id = self._tokens.get(hash_token(token))
-        return self._users.get(user_id) if user_id else None
+        user = self._users.get(user_id) if user_id else None
+        return user if user and not user.disabled else None
 
     def create_thread(self, user_id: str, title: str = "") -> Thread:
         thread = Thread(id=uuid.uuid4().hex, user_id=user_id, title=title)
@@ -111,6 +152,15 @@ CREATE TABLE IF NOT EXISTS kai_threads (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS kai_threads_user_updated ON kai_threads (user_id, updated_at DESC);
+CREATE TABLE IF NOT EXISTS kai_feedback (
+    thread_id      TEXT NOT NULL REFERENCES kai_threads(id),
+    message_index  INTEGER NOT NULL,
+    user_id        TEXT NOT NULL REFERENCES kai_users(id),
+    rating         SMALLINT NOT NULL CHECK (rating IN (-1, 1)),
+    comment        TEXT NOT NULL DEFAULT '',
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (thread_id, message_index)
+);
 """
 
 
@@ -171,3 +221,33 @@ class PostgresRepo:
                 "UPDATE kai_threads SET updated_at = now(), "
                 "title = CASE WHEN title = '' AND %s <> '' THEN %s ELSE title END WHERE id = %s",
                 (title or "", title or "", thread_id))
+
+    def list_users(self) -> list[User]:
+        with self.pool.connection() as conn:
+            rows = conn.execute("SELECT id, name, disabled FROM kai_users ORDER BY created_at").fetchall()
+        return [User(id=r["id"], name=r["name"], disabled=r["disabled"]) for r in rows]
+
+    def disable_user(self, user_id: str) -> bool:
+        with self.pool.connection() as conn:
+            cur = conn.execute("UPDATE kai_users SET disabled = TRUE WHERE id = %s", (user_id,))
+            return cur.rowcount > 0
+
+    def set_feedback(self, user_id, thread_id, message_index, rating, comment=""):
+        with self.pool.connection() as conn:
+            conn.execute(
+                "INSERT INTO kai_feedback (thread_id, message_index, user_id, rating, comment) "
+                "VALUES (%s, %s, %s, %s, %s) ON CONFLICT (thread_id, message_index) DO UPDATE "
+                "SET rating = EXCLUDED.rating, comment = EXCLUDED.comment, created_at = now()",
+                (thread_id, message_index, user_id, rating, comment))
+
+    def get_feedback(self, thread_id: str) -> dict[int, Rating]:
+        with self.pool.connection() as conn:
+            rows = conn.execute("SELECT message_index, rating FROM kai_feedback WHERE thread_id = %s",
+                                (thread_id,)).fetchall()
+        return {r["message_index"]: r["rating"] for r in rows}
+
+    def feedback_summary(self) -> dict:
+        with self.pool.connection() as conn:
+            rows = conn.execute("SELECT thread_id, rating, comment FROM kai_feedback "
+                                "ORDER BY created_at").fetchall()
+        return _summary([(r["thread_id"], r["rating"], r["comment"]) for r in rows])
