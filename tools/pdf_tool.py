@@ -1179,6 +1179,16 @@ def create_pdf_report(
 # Word (.docx) builder
 # ---------------------------------------------------------------------------
 
+_MD_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((https?://\S+)\)")
+
+
+def _download_image(url: str) -> bytes:
+    """Fetch an image for embedding (same source rules and timeout as the PDF builder)."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
 def _build_docx(title: str, content: str, subtitle: str = "",
                 is_arabic: bool = False) -> bytes:
     from docx import Document
@@ -1186,6 +1196,36 @@ def _build_docx(title: str, content: str, subtitle: str = "",
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
+
+    # Same proportions as the PDF: at most 60% of the text width, at most ~160pt tall.
+    img_max_w = Inches(6.5 * 0.60)
+    img_max_h = Pt(160)
+
+    def _add_image(url: str, caption: str) -> None:
+        p = None
+        try:
+            data = _download_image(url)
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            shape = p.add_run().add_picture(io.BytesIO(data), width=img_max_w)
+            if shape.height > img_max_h:  # keep tall images from filling the page
+                scale = img_max_h / shape.height
+                shape.height = int(shape.height * scale)
+                shape.width = int(shape.width * scale)
+        except Exception as exc:  # download failed or not an image Word can embed
+            if p is not None:     # drop the half-built picture paragraph
+                p._p.getparent().remove(p._p)
+            note = doc.add_paragraph(f"[Chart could not be loaded: {str(exc)[:80]}]")
+            for run in note.runs:
+                run.font.size = Pt(8.5)
+                run.font.color.rgb = RGBColor(0x80, 0x4D, 0x00)
+            return
+        if caption.strip():
+            cap = doc.add_paragraph(caption.strip())
+            cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for run in cap.runs:
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     def _set_rtl(para):
         pPr = para._p.get_or_add_pPr()
@@ -1290,6 +1330,13 @@ def _build_docx(title: str, content: str, subtitle: str = "",
         if re.fullmatch(r"[-=*]{3,}", line.strip()):
             flush()
             doc.add_paragraph()
+            continue
+
+        # Markdown image: ![caption](url), e.g. the charts create_report appends
+        img_m = _MD_IMAGE_RE.match(line.strip())
+        if img_m:
+            flush()
+            _add_image(img_m.group(2), img_m.group(1))
             continue
 
         if re.match(r"^\s*[-*+] ", line) or re.match(r"^\s*\d+[.)]\s", line):
