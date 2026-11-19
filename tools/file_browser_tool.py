@@ -4,7 +4,7 @@ import csv
 import io
 import json
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
 # NOTE: This tool runs on IBM Cloud servers, not on the user local machine.

@@ -27,7 +27,7 @@ import urllib.request
 from email.message import EmailMessage
 from typing import Any, Dict, List, Optional
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 
 # ---------------------------------------------------------------------------

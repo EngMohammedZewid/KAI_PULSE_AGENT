@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Union
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
 # Credential helpers (same pattern as pdf_tool.py)

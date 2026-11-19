@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 # ---------------------------------------------------------------------------
 # AWS S3 tools — uses stdlib SigV4 signing, no boto3 required

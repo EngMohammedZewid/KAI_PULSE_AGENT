@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 
-from ibm_watsonx_orchestrate.agent_builder.tools import tool
+from tools._tooling import tool
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
