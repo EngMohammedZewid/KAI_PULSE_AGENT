@@ -17,3 +17,7 @@ openpyxl>=3.1.0           # Read and write .xlsx
 requests>=2.31.0          # Cognos REST API
 sendgrid>=6.12.5          # Email delivery
 ibm-watsonx-ai>=1.5.0     # watsonx.ai models used inside some tools
+
+# Chat model provider (install one; see kai/models.py)
+# langchain-ibm             # KAI_MODEL_PROVIDER=watsonx (default, GPT-OSS 120B)
+# langchain-openai          # KAI_MODEL_PROVIDER=openai (any OpenAI-compatible endpoint)

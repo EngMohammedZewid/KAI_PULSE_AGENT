@@ -89,6 +89,11 @@ class KaiState(MessagesState):
     charts: NotRequired[Annotated[list[ChartRef], add_charts]]
     report_format: NotRequired[Optional[ReportFormat]]
 
+    # Per-turn fields (overwritten every turn by the ingest node)
+    uploads: NotRequired[list[FileRef]]      # input: files attached to this message
+    turn_uploads: NotRequired[list[str]]     # ids of the files attached to this message
+    route: NotRequired[str]                  # specialist chosen by the router
+
 
 def find_file(state: dict, file_id: str) -> Optional[FileRef]:
     for f in state.get("files") or []:
