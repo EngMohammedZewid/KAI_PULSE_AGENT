@@ -202,6 +202,50 @@ def _to_csv_bytes(rows: List[Dict[str, Any]]) -> bytes:
     return buf.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility
 
 
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹٬٫", "01234567890123456789,.")
+_NUMBER_RE = re.compile(r"[+-]?(?P<int>\d{1,3}(?:,\d{3})+|\d+)(?P<dec>\.\d+)?")
+_BOLD_RE = re.compile(r"\*\*(.+)\*\*|__(.+)__")
+
+
+def _excel_value(value: Any) -> tuple:
+    """(cell value, number format or None) for one table cell.
+
+    CSV and Markdown input arrives as text, so numeric-looking text becomes a
+    real number Excel can sum: "20,000", "-450.5", "(1,200)", "14.5%" and
+    Arabic-Indic digits. Text that only looks numeric stays text: a leading
+    zero ("007", phone numbers) or more than 15 digits (account numbers),
+    which Excel would otherwise strip or round. **bold** markers are removed.
+    """
+    if not isinstance(value, str):
+        return value, None
+    text = value.strip()
+    m = _BOLD_RE.fullmatch(text)
+    if m:
+        text = (m.group(1) or m.group(2)).strip()
+    s = text.translate(_AR_DIGITS).replace(" ", "").replace(" ", "")
+    negative = s.startswith("(") and s.endswith(")")
+    if negative:
+        s = s[1:-1]
+    percent = s.endswith("%")
+    if percent:
+        s = s[:-1]
+    m = _NUMBER_RE.fullmatch(s)
+    if not m:
+        return text, None
+    digits = m.group("int").replace(",", "")
+    decimals = len(m.group("dec") or "") - 1 if m.group("dec") else 0
+    if (len(digits) > 1 and digits.startswith("0")) or len(digits) + max(decimals, 0) > 15:
+        return text, None
+    number = float(s.replace(",", "")) if decimals else int(s.replace(",", ""))
+    if negative:
+        number = -number
+    if percent:
+        return number / 100, "0." + "0" * decimals + "%" if decimals else "0%"
+    if "," in m.group("int") or abs(number) >= 1000:
+        return number, "#,##0" + ("." + "0" * decimals if decimals else "")
+    return number, None
+
+
 def _to_xlsx_bytes(rows: List[Dict[str, Any]], sheet_name: str = "Sheet1") -> bytes:
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment
@@ -232,7 +276,10 @@ def _to_xlsx_bytes(rows: List[Dict[str, Any]], sheet_name: str = "Sheet1") -> by
     for row_idx, record in enumerate(rows, start=2):
         fill = stripe_fill if row_idx % 2 == 0 else None
         for col_idx, header in enumerate(headers, start=1):
-            cell = ws.cell(row=row_idx, column=col_idx, value=record.get(header, ""))
+            value, number_format = _excel_value(record.get(header, ""))
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            if number_format:
+                cell.number_format = number_format
             if fill:
                 cell.fill = fill
             cell.alignment = Alignment(vertical="center")

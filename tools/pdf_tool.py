@@ -17,6 +17,7 @@ import hashlib
 import hmac
 import io
 import json
+import logging
 import os
 import re
 import smtplib
@@ -30,6 +31,8 @@ from typing import Any, Dict, List, Optional
 from tools._safe_fetch import fetch as safe_fetch
 from tools._settings import require_bucket
 from tools._tooling import tool
+
+_log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -399,18 +402,36 @@ def _ar_wrap(text: str, font_name: str, font_size: float, avail_w: float) -> Lis
     return lines or [""]
 
 
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _font_dirs() -> List[str]:
+    """Where the shipped Amiri files are looked for, in order: KAI_FONT_DIR, then the
+    project root (the repo checkout, or /app in the Docker image)."""
+    dirs = [os.environ.get("KAI_FONT_DIR", "").strip(), _PROJECT_ROOT]
+    return [d for d in dirs if d]
+
+
 def _get_amiri(bold: bool = False) -> Optional[str]:
+    """Path to the Amiri TTF used for Arabic. The files shipped with the app come
+    first, so Arabic PDFs need no internet; a download is only the last resort."""
     key = "bold" if bold else "path"
     if key in _ARABIC_FONT_CACHE:
         return _ARABIC_FONT_CACHE[key]
     fname = "amiri_bold.ttf" if bold else "amiri_regular.ttf"
+    for folder in _font_dirs():
+        local = os.path.join(folder, fname)
+        if os.path.isfile(local) and os.path.getsize(local) > 50_000:
+            _ARABIC_FONT_CACHE[key] = local
+            return local
     tmp = os.path.join(tempfile.gettempdir(), fname)
     if os.path.exists(tmp) and os.path.getsize(tmp) > 50_000:
         _ARABIC_FONT_CACHE[key] = tmp
         return tmp
+    _log.warning("Amiri font %s not found in %s; downloading it (set KAI_FONT_DIR to avoid this)",
+                 fname, " or ".join(_font_dirs()))
     variant = "Amiri-Bold" if bold else "Amiri-Regular"
-    urls = [
-        f"https://aws-buc-for-orchestrate.s3.us-east-2.amazonaws.com/fonts/{fname}",
+    urls = [  # Google Fonts only (the old Orchestrate bucket is no longer a source)
         f"https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/amiri/{variant}.ttf",
         f"https://github.com/google/fonts/raw/main/ofl/amiri/{variant}.ttf",
         f"https://raw.githubusercontent.com/google/fonts/main/ofl/amiri/{variant}.ttf",
@@ -427,6 +448,7 @@ def _get_amiri(bold: bool = False) -> Optional[str]:
                 return tmp
         except Exception:
             continue
+    _log.error("Amiri font %s unavailable: Arabic text in PDFs will not render correctly", fname)
     return None
 
 
@@ -481,6 +503,8 @@ class _PDF:
                   space_after: float = 5.0) -> None:
         from reportlab.lib.utils import simpleSplit
         is_ar = _has_arabic(text)
+        if is_ar:  # this canvas path draws plain text: drop **bold** / *italic* markers
+            text = _strip_md(text)
         fn = self._fn(bold=bold, arabic=is_ar)
         avail_w = self._uw - indent
         lh = size * 1.4
@@ -600,14 +624,43 @@ class _PDF:
         self._cy -= h + space_after
 
     def table(self, rows: List[List[str]], space_after: float = 10.0) -> None:
-        """Render a parsed markdown table using ReportLab Table flowable."""
+        """Render a parsed markdown table using ReportLab Table flowable.
+
+        Arabic cells get the Amiri font, shaping, right alignment and wrapping
+        (Helvetica has no Arabic glyphs). A table whose header is mostly Arabic
+        is laid out right to left. **x** markers are removed; a cell that is
+        entirely **bold** is drawn in bold.
+        """
         if not rows:
             return
         from reportlab.platypus import Table as _RLTable, TableStyle as _RLTableStyle
         from reportlab.lib.colors import HexColor, white
         col_count = max(len(r) for r in rows)
         norm = [r + [""] * (col_count - len(r)) for r in rows]
+        header = [c for c in norm[0] if c.strip()]
+        rtl = bool(header) and sum(_has_arabic(c) for c in header) * 2 >= len(header)
+        if rtl:
+            norm = [list(reversed(r)) for r in norm]
         col_w = self._uw / col_count
+        size, pad = 9, 6
+        cell_cmds: List[tuple] = [("ALIGN", (0, 0), (-1, -1), "RIGHT")] if rtl else []
+        cells: List[List[str]] = []
+        for i, row in enumerate(norm):
+            out = []
+            for j, raw in enumerate(row):
+                m = re.fullmatch(r"\s*\*\*(.+?)\*\*\s*", raw)
+                bold = i == 0 or bool(m)
+                text = _strip_md(m.group(1) if m else raw).strip()
+                if _has_arabic(text) and self._ar_ok:
+                    fn = self._fn(bold=bold, arabic=True)
+                    lines = _ar_wrap(_ar_reshape(text), fn, size, col_w - 2 * pad)
+                    text = "\n".join(_ar_bidi(ln) for ln in lines)
+                    cell_cmds += [("FONTNAME", (j, i), (j, i), fn), ("ALIGN", (j, i), (j, i), "RIGHT")]
+                elif bold and i > 0:
+                    cell_cmds.append(("FONTNAME", (j, i), (j, i), "Helvetica-Bold"))
+                out.append(text)
+            cells.append(out)
+        norm = cells
         style_cmds = [
             ("BACKGROUND",    (0, 0), (-1, 0),  HexColor("#1A4E88")),
             ("TEXTCOLOR",     (0, 0), (-1, 0),  white),
@@ -621,7 +674,7 @@ class _PDF:
             ("LEFTPADDING",   (0, 0), (-1, -1), 6),
             ("RIGHTPADDING",  (0, 0), (-1, -1), 6),
             ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
-        ]
+        ] + cell_cmds  # per-cell commands last, so they override the defaults
         t = _RLTable(norm, colWidths=[col_w] * col_count)
         t.setStyle(_RLTableStyle(style_cmds))
         _, h = t.wrapOn(self._c, self._uw, self.H)
@@ -1182,6 +1235,16 @@ def create_pdf_report(
 # Word (.docx) builder
 # ---------------------------------------------------------------------------
 
+_MD_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((https?://\S+)\)")
+
+
+def _download_image(url: str) -> bytes:
+    """Fetch an image for embedding (same source rules and timeout as the PDF builder)."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
 def _build_docx(title: str, content: str, subtitle: str = "",
                 is_arabic: bool = False) -> bytes:
     from docx import Document
@@ -1189,6 +1252,36 @@ def _build_docx(title: str, content: str, subtitle: str = "",
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
+
+    # Same proportions as the PDF: at most 60% of the text width, at most ~160pt tall.
+    img_max_w = Inches(6.5 * 0.60)
+    img_max_h = Pt(160)
+
+    def _add_image(url: str, caption: str) -> None:
+        p = None
+        try:
+            data = _download_image(url)
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            shape = p.add_run().add_picture(io.BytesIO(data), width=img_max_w)
+            if shape.height > img_max_h:  # keep tall images from filling the page
+                scale = img_max_h / shape.height
+                shape.height = int(shape.height * scale)
+                shape.width = int(shape.width * scale)
+        except Exception as exc:  # download failed or not an image Word can embed
+            if p is not None:     # drop the half-built picture paragraph
+                p._p.getparent().remove(p._p)
+            note = doc.add_paragraph(f"[Chart could not be loaded: {str(exc)[:80]}]")
+            for run in note.runs:
+                run.font.size = Pt(8.5)
+                run.font.color.rgb = RGBColor(0x80, 0x4D, 0x00)
+            return
+        if caption.strip():
+            cap = doc.add_paragraph(caption.strip())
+            cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for run in cap.runs:
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     def _set_rtl(para):
         pPr = para._p.get_or_add_pPr()
@@ -1293,6 +1386,13 @@ def _build_docx(title: str, content: str, subtitle: str = "",
         if re.fullmatch(r"[-=*]{3,}", line.strip()):
             flush()
             doc.add_paragraph()
+            continue
+
+        # Markdown image: ![caption](url), e.g. the charts create_report appends
+        img_m = _MD_IMAGE_RE.match(line.strip())
+        if img_m:
+            flush()
+            _add_image(img_m.group(2), img_m.group(1))
             continue
 
         if re.match(r"^\s*[-*+] ", line) or re.match(r"^\s*\d+[.)]\s", line):
