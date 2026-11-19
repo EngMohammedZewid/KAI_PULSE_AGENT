@@ -77,18 +77,20 @@ def _fetch_csv(bucket: str, key: str, endpoint: str, token: str) -> str:
 
 def _cos_env() -> tuple[str, str, str]:
     """Return (api_key, bucket, endpoint) from environment or raise.
-    Orchestrate injects connection credentials as WXO_CONNECTION_{app_id}_{KEY}.
+    Reads COS_API_KEY / COS_BUCKET / COS_ENDPOINT, or the names Orchestrate
+    injected for its connection (WXO_CONNECTION_cos_credentials_{KEY}).
     """
     pfx = "WXO_CONNECTION_cos_credentials_"
-    api_key  = os.environ.get(f"{pfx}COS_API_KEY", "").strip()
-    bucket   = os.environ.get(f"{pfx}COS_BUCKET", "").strip()
-    endpoint = os.environ.get(f"{pfx}COS_ENDPOINT", "").strip()
-    if not api_key:
-        raise RuntimeError(f"{pfx}COS_API_KEY environment variable is not set.")
-    if not bucket:
-        raise RuntimeError(f"{pfx}COS_BUCKET environment variable is not set.")
-    if not endpoint:
-        raise RuntimeError(f"{pfx}COS_ENDPOINT environment variable is not set.")
+
+    def g(key: str) -> str:
+        return (os.environ.get(key, "").strip()
+                or os.environ.get(f"{pfx}{key}", "").strip())
+
+    api_key, bucket, endpoint = g("COS_API_KEY"), g("COS_BUCKET"), g("COS_ENDPOINT")
+    for name, value in (("COS_API_KEY", api_key), ("COS_BUCKET", bucket),
+                        ("COS_ENDPOINT", endpoint)):
+        if not value:
+            raise RuntimeError(f"{name} environment variable is not set.")
     return api_key, bucket, endpoint
 
 

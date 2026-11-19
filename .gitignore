@@ -19,3 +19,6 @@ test_*.pdf
 
 # Local FileStore for development
 .kai_files/
+
+# Local preview config
+.claude/launch.json
