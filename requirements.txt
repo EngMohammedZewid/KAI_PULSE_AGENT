@@ -1,7 +1,9 @@
-# KAI Pulse on LangGraph: tool dependencies (Phase 1).
+# KAI Pulse on LangGraph: graph and tool dependencies.
 # Orchestrate-era requirements are kept in legacy_orchestrate/requirements.txt.
 
-langchain-core>=1.2
+langchain-core~=1.2.30     # ~=1.2 keeps the Orchestrate ADK (legacy) working in the same venv
+langgraph>=1.1,<2
+pypdf>=5.0                # Text from PDF bank statements
 
 # Report and export tools
 reportlab>=4.0            # PDF output, Unicode and Arabic via the Amiri TTF

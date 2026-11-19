@@ -16,3 +16,6 @@ session_history_payload.json
 session_history_summary.*
 *_Conversation_Summary.pdf
 test_*.pdf
+
+# Local FileStore for development
+.kai_files/
