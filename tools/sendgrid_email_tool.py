@@ -54,7 +54,7 @@ def _sg_env() -> tuple[str, str, str]:
     return (
         g("SENDGRID_API_KEY"),
         g("SENDGRID_FROM_EMAIL"),
-        g("SENDGRID_FROM_NAME", "watsonx Orchestrate"),
+        g("SENDGRID_FROM_NAME", "KAI Pulse"),
     )
 
 
@@ -64,10 +64,11 @@ def _guess_content_type(filename: str) -> str:
 
 
 def _download_file(url: str) -> tuple[bytes, str]:
-    req = urllib.request.Request(url, headers={"User-Agent": "wxo-sendgrid-tool/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = resp.read()
-        ctype = (resp.headers.get("Content-Type") or "").split(";", 1)[0].strip()
+    """Attachments come only from trusted storage hosts (our S3/COS links), so a
+    crafted file_url cannot make the server fetch, then email, internal data."""
+    from tools._safe_fetch import fetch
+
+    body, ctype = fetch(url, trusted_only=True, timeout=60)
     return body, (ctype or "application/octet-stream")
 
 
