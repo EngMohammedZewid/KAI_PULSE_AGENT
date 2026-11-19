@@ -22,3 +22,6 @@ test_*.pdf
 
 # Local preview config
 .claude/launch.json
+
+# Eval run reports
+evals/reports/

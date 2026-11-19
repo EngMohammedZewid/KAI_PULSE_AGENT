@@ -1,0 +1,241 @@
+# KAI Pulse behaviour evals. Each case maps to a rule of the original
+# Orchestrate prompt (legacy_orchestrate/agents/my_agent.yaml).
+#
+# `expect` is checked in both modes. `script` is what the scripted model says
+# (ignored with --live). Statement fixtures: 12 transactions over Jan-Mar 2026,
+# average income 20,666.67, debt 3,000 (DTI 14.5%), top spending Education,
+# affordable installment 3,753 to 5,003 EGP.
+
+cases:
+
+  - id: greeting
+    rule: General questions are answered without tools.
+    turns:
+      - user: "Hi, what can you do?"
+        expect:
+          route: general
+          reply_any: ["statement", "report", "chart"]
+        script:
+          - route: general
+          - say: "Hi! I can analyze bank statements, write PDF or Word reports, export tables and draw charts."
+
+  - id: statement-single-analyze
+    rule: "Scenario A: one statement plus an analysis request is analyzed right away."
+    turns:
+      - user: "Analyze this bank statement for me"
+        files: [statements/withdrawals_deposits_narration.csv]
+        expect:
+          route: finance
+          tools: [analyze_statements]
+          state: {analysis.metrics.avg_monthly_income: 20666.67, analysis.metrics.debt_obligations_pct: 14.5}
+          reply_any: ["20,666", "20,667", "20666"]
+        script:
+          - route: finance
+          - call: {analyze_statements: {file_ids: ["$file:withdrawals_deposits_narration.csv"]}}
+          - say: "Your average monthly income is EGP 20,667 and debt payments are 14.5% of income."
+
+  - id: statements-add-then-analyze-all
+    rule: "Scenarios B and C: 'add' queues statements with no analysis; 'analyze all' covers every queued file."
+    turns:
+      - user: "add this statement"
+        files: [split/statement_jan_feb.csv]
+        expect: {llm_calls: 0, reply_any: ["Statement 1 received"]}
+      - user: "add"
+        files: [split/statement_mar.csv]
+        expect: {llm_calls: 0, reply_any: ["Statement 2 received"]}
+      - user: "analyze all"
+        expect:
+          route: finance
+          tools: [analyze_statements]
+          state: {analysis.metrics.avg_monthly_income: 20666.67, analysis.metrics.transaction_count: 12}
+        script:
+          - route: finance
+          - call: {analyze_statements: {}}
+          - say: "Across both statements your average monthly income is EGP 20,667."
+
+  - id: finance-follow-ups
+    rule: Follow-ups use the stored analysis (no re-analysis); affordability carries the bank-approval disclaimer.
+    turns:
+      - user: "Please analyze my statement"
+        files: [statements/dr_cr_particulars.csv]
+        expect: {tools: [analyze_statements]}
+        script:
+          - route: finance
+          - call: {analyze_statements: {file_ids: ["$file:dr_cr_particulars.csv"]}}
+          - say: "Done. Average income EGP 20,667."
+      - user: "What is my top spending category?"
+        expect:
+          route: finance
+          not_tools: [analyze_statements]
+          reply_any: ["Education"]
+        script:
+          - route: finance
+          - say: "Your top spending category is Education."
+      - user: "How much of a monthly mortgage installment can I afford?"
+        expect:
+          route: finance
+          tools: [simulate_mortgage]
+          not_tools: [analyze_statements]
+          reply_each:
+            - ["5,003", "5003", "3,753", "3753"]
+            - ["credit history", "collateral", "bank policy", "approval"]
+        script:
+          - route: finance
+          - call: {simulate_mortgage: {}}
+          - say: "You can afford EGP 3,753 to 5,003 a month. Final approval depends on credit history, collateral and bank policy."
+
+  - id: report-asks-format
+    rule: A report request without a format asks "PDF or Word?" and waits for the answer.
+    turns:
+      - user: "Analyze this statement"
+        files: [statements/debit_credit_details.csv]
+        script:
+          - route: finance
+          - call: {analyze_statements: {file_ids: ["$file:debit_credit_details.csv"]}}
+          - say: "Analysis done."
+      - user: "Create a report of my financial analysis"
+        expect:
+          route: documents
+          tools: [create_report]
+          interrupt: report_format
+        script:
+          - route: documents
+          - call: {create_report: {title: "Financial Analysis", content: "## Executive Summary\n- Income EGP 20,667 a month\n## Key Metrics\n- DTI 14.5%"}}
+      - resume: "pdf"
+        expect:
+          report: {format: pdf, contains: ["##"]}
+          reply_any: ["https://example.com/reports"]
+        script:
+          - say: "Your PDF report is ready: https://example.com/reports/eval-1.pdf"
+
+  - id: report-named-format
+    rule: A named format skips the question.
+    turns:
+      - user: "Write a short Word report about the benefits of saving money"
+        expect:
+          route: documents
+          tools: [create_report]
+          interrupt: null
+          report: {format: docx}
+        script:
+          - route: documents
+          - call: {create_report: {title: "Benefits of Saving", content: "## Overview\n- Savings build security", format: docx}}
+          - say: "Here is your Word report: https://example.com/reports/eval-1.docx"
+
+  - id: arabic-add-and-analyze
+    rule: Arabic users get Arabic replies; the fixed 'add' reply is Arabic too.
+    turns:
+      - user: "أضف هذا الكشف"
+        files: [statements/arabic_headers.csv]
+        expect: {llm_calls: 0, reply_any: ["تم استلام الكشف"], state: {language: Arabic}}
+      - user: "حلل كل الكشوفات"
+        expect:
+          route: finance
+          tools: [analyze_statements]
+          reply_arabic: true
+          state: {analysis.metrics.avg_monthly_income: 20666.67}
+        script:
+          - route: finance
+          - call: {analyze_statements: {}}
+          - say: "متوسط دخلك الشهري 20,667 جنيه."
+
+  - id: arabic-pdf-statement
+    rule: PDF statements are read from the file (no re-upload); the analysis matches the CSV numbers.
+    mock_extraction: pdf/arabic_statement.transactions.json
+    turns:
+      - user: "حلل كشف الحساب هذا"
+        files: [pdf/arabic_statement.pdf]
+        expect:
+          route: finance
+          tools: [analyze_statements]
+          reply_arabic: true
+          state: {analysis.metrics.avg_monthly_income: 20666.67, analysis.metrics.debt_obligations_pct: 14.5}
+        script:
+          - route: finance
+          - call: {analyze_statements: {file_ids: ["$file:arabic_statement.pdf"]}}
+          - say: "متوسط دخلك الشهري 20,667 جنيه، والديون 14.5% من الدخل."
+
+  - id: arabic-report
+    rule: Reports are written in the user's language.
+    turns:
+      - user: "اكتب تقريرا بصيغة PDF عن أهمية الادخار"
+        expect:
+          route: documents
+          tools: [create_report]
+          report: {format: pdf, language: Arabic}
+          reply_arabic: true
+        script:
+          - route: documents
+          - call: {create_report: {title: "أهمية الادخار", content: "## نظرة عامة\n- الادخار يحمي الأسرة", format: pdf}}
+          - say: "تقريرك جاهز: https://example.com/reports/eval-1.pdf"
+
+  - id: spreadsheet-upload
+    rule: A spreadsheet is inspected for its real column names, then charted.
+    turns:
+      - user: "Here is our sales data, show me the revenue trend"
+        files: [sales_data.xlsx]
+        expect:
+          route: data
+          tools: [describe_file, chart_from_file]
+        script:
+          - route: data
+          - call: {describe_file: {file_id: "$file:sales_data.xlsx"}}
+          - call: {chart_from_file: {file_id: "$file:sales_data.xlsx", x_column: "Order Date", y_columns: "Revenue", title: "Monthly revenue"}}
+          - say: "Here is the monthly revenue trend."
+
+  - id: table-export-csv
+    rule: Table exports use export_table_to_file with the requested format.
+    turns:
+      - user: "Export this table to a CSV file:\n| Name | Sales |\n|---|---|\n| Ali | 10 |\n| Mona | 12 |"
+        expect:
+          route: documents
+          tools: [export_table_to_file]
+          export: {format: csv}
+        script:
+          - route: documents
+          - call: {export_table_to_file: {data: "| Name | Sales |\n|---|---|\n| Ali | 10 |\n| Mona | 12 |", file_format: csv, filename: sales}}
+          - say: "Your CSV is ready to download."
+
+  - id: email-report
+    rule: Emailing a generated report sends its download link with SendGrid.
+    turns:
+      - user: "Write a short PDF report on budgeting basics"
+        expect: {tools: [create_report], report: {format: pdf}}
+        script:
+          - route: documents
+          - call: {create_report: {title: "Budgeting Basics", content: "## Overview\n- Track spending", format: pdf}}
+          - say: "Your report: https://example.com/reports/eval-1.pdf"
+      - user: "Email that report to finance-team@example.com with the subject 'Budgeting basics' and say: here is the report"
+        expect:
+          route: documents
+          tools: [send_file_via_sendgrid]
+          email: {to: finance-team@example.com}
+        script:
+          - route: documents
+          - call: {send_file_via_sendgrid: {to_email: finance-team@example.com, subject: "Budgeting basics", body: "here is the report", file_url: "https://example.com/reports/eval-1.pdf"}}
+          - say: "Sent to finance-team@example.com."
+
+  - id: cognos-list
+    rule: Cognos questions go to the Cognos specialist.
+    turns:
+      - user: "Which Cognos dashboards are available?"
+        expect:
+          route: cognos
+          tools: [cognos_list_content]
+          reply_any: ["Sales Dashboard"]
+        script:
+          - route: cognos
+          - call: {cognos_list_content: {}}
+          - say: "Available: Sales Dashboard and HR Headcount."
+
+  - id: chart-from-numbers
+    rule: Numbers given in the chat are charted with the chart primitives.
+    turns:
+      - user: "Draw a bar chart of monthly sales: Jan 10, Feb 14, Mar 9"
+        expect:
+          route: data
+          tools: [render_bar_chart]
+        script:
+          - route: data
+          - call: {render_bar_chart: {categories_json: '["Jan","Feb","Mar"]', series_json: '[{"name":"Sales","values":[10,14,9]}]', title: "Monthly sales"}}
+          - say: "Here is the chart."
