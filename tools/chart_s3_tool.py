@@ -14,6 +14,7 @@ import urllib.request
 
 from tools._settings import require_bucket
 from tools._tooling import tool
+from tools._chart_spec import records_chart
 
 # ---------------------------------------------------------------------------
 # AWS S3 tools — uses stdlib SigV4 signing, no boto3 required
@@ -177,6 +178,7 @@ def _fetch_s3_csv(access_key, secret_key, bucket, region, key) -> str:
 
 # ── Chart helpers ─────────────────────────────────────────────────────────────
 
+@records_chart
 def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     import copy
     cfg = copy.deepcopy(config)

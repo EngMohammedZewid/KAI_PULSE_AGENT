@@ -10,6 +10,7 @@ import urllib.parse
 import urllib.request
 
 from tools._tooling import tool
+from tools._chart_spec import records_chart
 
 # ---------------------------------------------------------------------------
 # IBM Cloud Object Storage helpers (IAM token auth, stdlib only — no ibm_boto3)
@@ -96,6 +97,7 @@ def _cos_env() -> tuple[str, str, str]:
 
 # ── Chart helpers (same as chart_csv_tool.py) ────────────────────────────────
 
+@records_chart
 def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     import copy
     cfg = copy.deepcopy(config)

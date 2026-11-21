@@ -46,6 +46,21 @@
   .msg th { background: var(--bg); }
   .msg img { max-width: 100%; border-radius: 8px; margin: 6px 0; background: #fff; }
   .msg .files { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .msg:has(.chart-card) { width: min(760px, 100%); }
+  .chart-card { margin: 8px 0 10px; padding: 12px 14px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .chart-title { font-weight: 600; font-size: 14px; margin: 0 0 6px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+  .chart-key { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; font-size: 12px; color: var(--muted); border-radius: 6px; }
+  .chart-key.off { opacity: .45; text-decoration: line-through; }
+  .chart-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .chart-area { position: relative; width: 100%; }
+  .chart-actions { display: flex; justify-content: flex-end; gap: 12px; font-size: 12px; margin-top: 4px; }
+  .chart-actions a { color: var(--muted); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0 0 10px; }
+  .kpi { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+  .kpi-label { font-size: 12px; color: var(--muted); }
+  .kpi-value { font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .kpi.bad .kpi-value { color: var(--error); }
   .msg.error { color: var(--error); }
   .question { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
   .rate { display: flex; gap: 4px; margin-top: 6px; }
@@ -59,6 +74,8 @@
   .hidden { display: none !important; }
   @media (max-width: 720px) { aside { display: none; } #log { padding: 16px; } form { padding: 12px 16px; } }
 </style>
+<script src="/static/vendor/chart.umd.js"></script>
+<script src="/static/charts.js"></script>
 </head>
 <body>
 <div id="signin" class="hidden">
@@ -202,6 +219,7 @@
     div.className = `msg ${m.role}`;
     div.dir = "auto";
     div.innerHTML = render(m.content || "");
+    if (m.role === "assistant" && window.KaiCharts) window.KaiCharts.enhance(div, m);
     if (m.attachments && m.attachments.length) {
       const f = document.createElement("div");
       f.className = "files";
@@ -255,6 +273,7 @@
 
   async function openThread(id) {
     current = id;
+    if (window.KaiCharts) window.KaiCharts.reset();
     $("log").innerHTML = "";
     const data = await api(`/api/threads/${id}`);
     data.messages.forEach((m) => addMessage(m, (data.feedback || {})[m.index]));

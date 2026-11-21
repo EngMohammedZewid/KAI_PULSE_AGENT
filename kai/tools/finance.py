@@ -14,8 +14,9 @@ from langchain_core.tools import InjectedToolCallId
 from langgraph.prebuilt import InjectedState
 
 from kai.files import read_text, store_from_config
-from kai.state import Analysis, ChartRef, find_file
-from kai.tools._common import chart_url, reply, unknown_file
+from kai.state import Analysis, find_file
+from kai.tools._common import chart_ref, chart_url, reply, unknown_file
+from tools._chart_spec import capture
 from tools._tooling import tool
 from tools.bank_statement_tool import (
     analyze_bank_statement,
@@ -126,7 +127,22 @@ def analyze_statements(
         return f"Analysis found no transactions: {raw[:500]}"
 
     analysis = Analysis(file_ids=ids, metrics=metrics)
-    return reply(tool_call_id, _metrics_brief(metrics), analysis=analysis, statements=ids)
+    return reply(tool_call_id, _metrics_brief(metrics), artifact={"kpis": kpi_summary(metrics)},
+                 analysis=analysis, statements=ids)
+
+
+def kpi_summary(metrics: dict) -> dict:
+    """Headline numbers for the summary cards the chat page shows above the reply."""
+    def num(key: str) -> float:
+        try:
+            return round(float(metrics.get(key) or 0), 2)
+        except (TypeError, ValueError):
+            return 0.0
+
+    return {"currency": str(metrics.get("currency") or ""),
+            "months": int(num("total_months")),
+            "income": num("avg_monthly_income"), "spending": num("avg_monthly_spending"),
+            "savings": num("avg_monthly_savings"), "dti": num("debt_obligations_pct")}
 
 
 @tool
@@ -166,14 +182,16 @@ def financial_chart(
     analysis = state.get("analysis")
     if not analysis:
         return "Error: no analysis yet. Run analyze_statements first."
-    rendered = render_financial_chart.func(
-        analysis_json=json.dumps(analysis["metrics"]), chart_type=chart_type, title=title,
-    )
+    with capture() as recorded:
+        rendered = render_financial_chart.func(
+            analysis_json=json.dumps(analysis["metrics"]), chart_type=chart_type, title=title,
+        )
     url = chart_url(rendered)
     if not url:
         return rendered  # the wrapped tool's error message
-    chart = ChartRef(title=title or chart_type.replace("_", " ").title(),
-                     url=url, source=f"financial:{chart_type}")
+    chart = chart_ref(title or chart_type.replace("_", " ").title(), url,
+                      f"financial:{chart_type}", recorded,
+                      unit=str(analysis["metrics"].get("currency") or ""))
     return reply(tool_call_id, rendered, charts=[chart])
 
 
