@@ -1,11 +1,13 @@
 from __future__ import annotations
 import csv, io, json, urllib.parse, datetime
 from tools._tooling import tool
+from tools._chart_spec import records_chart
 
 _COLORS = ["#2E6DB4","#C8A84B","#E05C2E","#3DAA6D","#9B59B6","#1ABC9C","#E74C3C","#F39C12"]
 _QUICKCHART = "https://quickchart.io/chart"
 
 
+@records_chart
 def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     import copy, urllib.request
     cfg = copy.deepcopy(config)

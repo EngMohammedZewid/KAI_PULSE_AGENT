@@ -25,6 +25,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 from tools._tooling import tool
+from tools._chart_spec import records_chart
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +117,7 @@ _COLORS = [
 _QUICKCHART = "https://quickchart.io/chart"
 
 
+@records_chart
 def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     import copy
     cfg = copy.deepcopy(config)

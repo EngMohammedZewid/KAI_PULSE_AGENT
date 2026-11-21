@@ -15,6 +15,7 @@ import json
 import urllib.parse
 
 from tools._tooling import tool
+from tools._chart_spec import records_chart
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ _COLORS = [
 ]
 
 
+@records_chart
 def _chart_url(config: dict, width: int = 600, height: int = 400) -> str:
     """Build a QuickChart.io URL for the given Chart.js config dict."""
     import copy, urllib.request

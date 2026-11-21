@@ -8,8 +8,9 @@ from langchain_core.tools import InjectedToolCallId
 from langgraph.prebuilt import InjectedState
 
 from kai.files import read_text, store_from_config
-from kai.state import ChartRef, find_file
-from kai.tools._common import chart_url, reply, unknown_file
+from kai.state import find_file
+from kai.tools._common import chart_ref, chart_url, reply, unknown_file
+from tools._chart_spec import capture
 from tools._tooling import tool
 from tools.chart_csv_tool import render_chart_from_csv
 from tools.chart_excel_ts_tool import inspect_excel_content, render_chart_from_excel
@@ -89,25 +90,26 @@ def chart_from_file(
         return unknown_file(file_id, state)
     store = store_from_config(config)
     flag = "true" if area else "false"
-    if ref["kind"] == "csv":
-        rendered = render_chart_from_csv.func(
-            x_column=x_column, y_columns=y_columns, csv_content=read_text(store, ref),
-            title=title, area=flag, aggregate=aggregate, group_by=group_by,
-            chart_type=chart_type,
-        )
-    elif ref["kind"] == "excel":
-        rendered = render_chart_from_excel.func(
-            file_path=store.locator(ref), x_column=x_column, y_columns=y_columns,
-            sheet_name=sheet_name, title=title, area=flag, aggregate=aggregate,
-            group_by=group_by,
-        )
-    else:
+    if ref["kind"] not in ("csv", "excel"):
         return f"Error: {ref['name']} is not a CSV or Excel file."
+    with capture() as recorded:
+        if ref["kind"] == "csv":
+            rendered = render_chart_from_csv.func(
+                x_column=x_column, y_columns=y_columns, csv_content=read_text(store, ref),
+                title=title, area=flag, aggregate=aggregate, group_by=group_by,
+                chart_type=chart_type,
+            )
+        else:
+            rendered = render_chart_from_excel.func(
+                file_path=store.locator(ref), x_column=x_column, y_columns=y_columns,
+                sheet_name=sheet_name, title=title, area=flag, aggregate=aggregate,
+                group_by=group_by,
+            )
     url = chart_url(rendered)
     if not url:
         return rendered  # the wrapped tool's error message
     return reply(tool_call_id, rendered,
-                 charts=[ChartRef(title=title, url=url, source=f"file:{file_id}")])
+                 charts=[chart_ref(title, url, f"file:{file_id}", recorded)])
 
 
 DATA_FILE_TOOLS = [list_files, describe_file, chart_from_file]

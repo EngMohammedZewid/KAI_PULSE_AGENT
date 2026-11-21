@@ -37,6 +37,7 @@ class ChartRef(TypedDict):
     title: str
     url: str
     source: str          # e.g. "financial:savings" or "file:f_ab12cd34"
+    spec: NotRequired[dict]   # plain data for the interactive chart (tools._chart_spec.to_spec)
 
 
 class Analysis(TypedDict):

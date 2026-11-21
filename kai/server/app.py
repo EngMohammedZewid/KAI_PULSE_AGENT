@@ -22,7 +22,8 @@ from typing import Any, Literal, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
-from langchain_core.messages import AIMessage, HumanMessage
+from fastapi.staticfiles import StaticFiles
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.types import Command
 from pydantic import BaseModel
 
@@ -65,16 +66,34 @@ def _text(content: Any) -> str:
     return ""
 
 
-def serialize(messages: list) -> list[dict]:
+def serialize(messages: list, charts: Optional[list] = None) -> list[dict]:
     """User and assistant messages for the UI; tool traffic is left out.
-    `index` is the message's position in this list, stable as the thread grows."""
+    `index` is the message's position in this list, stable as the thread grows.
+
+    An assistant reply also carries `charts` (url + plain-data spec, for each chart
+    image it shows) and `kpis` (the analysis summary, when its turn analyzed
+    statements), so the page can draw interactive charts and summary cards."""
+    specs = {c["url"]: c["spec"] for c in charts or [] if c.get("spec")}
     out = []
+    kpis = None  # summary from analyze_statements earlier in the current turn
     for m in messages:
         if isinstance(m, HumanMessage):
+            kpis = None
             out.append({"role": "user", "content": _text(m.content),
                         "attachments": m.additional_kwargs.get("attachments", [])})
+        elif isinstance(m, ToolMessage):
+            art = getattr(m, "artifact", None)
+            if isinstance(art, dict) and isinstance(art.get("kpis"), dict):
+                kpis = art["kpis"]
         elif isinstance(m, AIMessage) and _text(m.content).strip():
-            out.append({"role": "assistant", "content": _text(m.content)})
+            text = _text(m.content)
+            item = {"role": "assistant", "content": text}
+            shown = [{"url": u, "spec": s} for u, s in specs.items() if u in text]
+            if shown:
+                item["charts"] = shown
+            if kpis:
+                item["kpis"], kpis = kpis, None
+            out.append(item)
     for i, m in enumerate(out):
         m["index"] = i
     return out
@@ -99,6 +118,7 @@ def thread_json(t: Thread) -> dict:
 def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings] = None) -> FastAPI:
     settings = settings or Settings()
     app = FastAPI(title="KAI Pulse", docs_url="/api/docs", openapi_url="/api/openapi.json")
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")  # chat page assets (Chart.js)
     busy: dict[str, threading.Lock] = {}
     busy_guard = threading.Lock()
 
@@ -142,8 +162,9 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
             snapshot = graph.get_state(cfg)
             repo.touch_thread(thread.id, title)
             messages = snapshot.values.get("messages", [])
+            charts = snapshot.values.get("charts", [])
             first_new = len(serialize(messages[:before]))
-            new = [m for m in serialize(messages)[first_new:] if m["role"] == "assistant"]
+            new = [m for m in serialize(messages, charts)[first_new:] if m["role"] == "assistant"]
             return {"messages": new, "interrupt": pending_question(snapshot)}
         finally:
             lock.release()
@@ -173,7 +194,8 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
     def get_thread(thread: Thread = Depends(owned_thread)) -> dict:
         snapshot = graph.get_state(run_config(thread))
         return {"thread": thread_json(thread),
-                "messages": serialize(snapshot.values.get("messages", [])),
+                "messages": serialize(snapshot.values.get("messages", []),
+                                      snapshot.values.get("charts", [])),
                 "interrupt": pending_question(snapshot),
                 "feedback": {str(i): r for i, r in repo.get_feedback(thread.id).items()}}
 

@@ -16,13 +16,14 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.managed import RemainingSteps
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import ToolNode, create_react_agent
 from pydantic import BaseModel, Field
 from typing_extensions import NotRequired
 
 from kai.nodes import after_ingest, detect_language, ingest, route_target
 from kai.prompts import ROUTER_PROMPT, context_block, specialist_prompt
 from kai.state import KaiState
+from kai.tools._common import record_charts
 from kai.tools.data_files import DATA_FILE_TOOLS, list_files
 from kai.tools.documents import create_report
 from kai.tools.finance import FINANCE_TOOLS, financial_chart
@@ -82,7 +83,7 @@ def _router(model: BaseChatModel):
 def _specialist(model: BaseChatModel, name: str):
     return create_react_agent(
         model,
-        SPECIALIST_TOOLS[name],
+        ToolNode(SPECIALIST_TOOLS[name], wrap_tool_call=record_charts),
         prompt=lambda state: [SystemMessage(specialist_prompt(name, state)), *state["messages"]],
         state_schema=SpecialistState,
         name=name,
