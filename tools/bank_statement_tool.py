@@ -130,7 +130,7 @@ def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
         if "title" in sc:
             sc["title"].setdefault("font", {}).setdefault("size", 9)
     body = json.dumps({
-        "chart": cfg, "width": width, "height": height, "backgroundColor": "white",
+        "chart": cfg, "width": width, "height": height, "backgroundColor": "white", "version": "4",
     }).encode("utf-8")
     req = urllib.request.Request(
         "https://quickchart.io/chart/create",
@@ -144,7 +144,7 @@ def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     except Exception:
         params = urllib.parse.urlencode({
             "c": json.dumps(cfg, separators=(",", ":")),
-            "w": width, "h": height, "bkg": "white",
+            "w": width, "h": height, "bkg": "white", "v": "4",
         })
         return f"{_QUICKCHART}?{params}"
 
@@ -987,7 +987,7 @@ def render_financial_chart(
                 },
                 "scales": {
                     "x": {"title": {"display": True, "text": "Month"}},
-                    "y": {"title": {"display": True, "text": f"Amount ({cur})"}},
+                    "y": {"title": {"display": True, "text": f"Amount ({cur})"}, "beginAtZero": True},
                 },
             },
         }
@@ -1023,7 +1023,7 @@ def render_financial_chart(
                 },
                 "scales": {
                     "x": {"title": {"display": True, "text": "Month"}},
-                    "y": {"title": {"display": True, "text": f"Amount ({cur})"}},
+                    "y": {"title": {"display": True, "text": f"Amount ({cur})"}, "beginAtZero": True},
                 },
             },
         }
@@ -1057,6 +1057,7 @@ def render_financial_chart(
                     "x": {"title": {"display": True, "text": "Month"}},
                     "y": {
                         "title": {"display": True, "text": f"Net Cash Flow ({cur})"},
+                        "beginAtZero": True,
                         "grid": {"color": "#DDDDDD"},
                     },
                 },

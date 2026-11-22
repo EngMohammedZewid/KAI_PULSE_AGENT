@@ -43,7 +43,7 @@ def _chart_url(config: dict, width: int = 600, height: int = 400) -> str:
         if "title" in sc:
             sc["title"].setdefault("font", {}).setdefault("size", 9)
     # POST to /chart/create for a short URL (avoids URL length limits)
-    body = json.dumps({"chart": cfg, "width": width, "height": height, "backgroundColor": "white"}).encode("utf-8")
+    body = json.dumps({"chart": cfg, "width": width, "height": height, "backgroundColor": "white", "version": "4"}).encode("utf-8")
     req = urllib.request.Request(
         "https://quickchart.io/chart/create",
         data=body,
@@ -58,7 +58,7 @@ def _chart_url(config: dict, width: int = 600, height: int = 400) -> str:
             "c": json.dumps(cfg, separators=(",", ":")),
             "w": width,
             "h": height,
-            "bkg": "white",
+            "bkg": "white", "v": "4",
         })
         return f"{_QUICKCHART}?{params}"
 

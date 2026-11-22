@@ -9,8 +9,10 @@ wrote can run as code. The PNG URL stays the fallback and is what reports use.
 """
 from __future__ import annotations
 
+import copy
 import functools
 import math
+import re
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Callable, Iterator, Optional
@@ -24,12 +26,37 @@ KINDS = {"bar": "bar", "horizontalBar": "bar", "line": "line", "pie": "pie",
          "doughnut": "doughnut", "radar": None, "scatter": None, "bubble": None}
 
 
+_ARABIC = re.compile(r"[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]")
+
+
+def png_safe(config: Any) -> Any:
+    """A copy of the config for the PNG: the public QuickChart renderer has no
+    Arabic font and draws Arabic text as '?????', so an Arabic chart title or
+    axis title is hidden there. The report shows the title as a caption under
+    the image, and the interactive chart (built from the original) shows it all."""
+    if not isinstance(config, dict):
+        return config
+    cfg = copy.deepcopy(config)
+    options = cfg.get("options") if isinstance(cfg.get("options"), dict) else {}
+    plugins = options.get("plugins") if isinstance(options.get("plugins"), dict) else {}
+    title = plugins.get("title")
+    if isinstance(title, dict) and _ARABIC.search(_text(title.get("text"))):
+        title["display"] = False
+    scales = options.get("scales") if isinstance(options.get("scales"), dict) else {}
+    for scale in scales.values():
+        st = scale.get("title") if isinstance(scale, dict) else None
+        if isinstance(st, dict) and _ARABIC.search(_text(st.get("text"))):
+            st["display"] = False
+    return cfg
+
+
 def records_chart(chart_url: Callable[..., str]) -> Callable[..., str]:
-    """Decorate a tool's `_chart_url(config, ...)` so the config is recorded with its URL."""
+    """Decorate a tool's `_chart_url(config, ...)`: the PNG gets a `png_safe` copy,
+    and the original config is recorded with its URL."""
 
     @functools.wraps(chart_url)
     def wrapper(config: dict, *args, **kwargs) -> str:
-        url = chart_url(config, *args, **kwargs)
+        url = chart_url(png_safe(config), *args, **kwargs)
         found = _recorded.get()
         if found is not None and isinstance(url, str):
             found.append((url, config))

@@ -32,12 +32,16 @@ def parse_format(answer: object) -> Optional[str]:
     return None
 
 
-def with_charts(content: str, charts: list[dict]) -> str:
+CHARTS_HEADING = {"English": "Charts", "Arabic": "الرسوم البيانية"}
+
+
+def with_charts(content: str, charts: list[dict], language: str = "English") -> str:
     missing = [c for c in charts if c["url"] not in content]
     if not missing:
         return content
     embeds = "\n\n".join(f"![{c['title']}]({c['url']})" for c in missing)
-    return f"{content.rstrip()}\n\n## Charts\n\n{embeds}\n"
+    heading = CHARTS_HEADING.get(language, CHARTS_HEADING["English"])
+    return f"{content.rstrip()}\n\n## {heading}\n\n{embeds}\n"
 
 
 def _build(fmt: str, **kwargs) -> str:
@@ -72,6 +76,6 @@ def create_report(
             return (f"The user answered '{answer}', which is not PDF or Word. "
                     "Ask them which format they want, then call create_report with format.")
 
-    body = with_charts(content, state.get("charts") or []) if include_charts else content
+    body = with_charts(content, state.get("charts") or [], language) if include_charts else content
     result = _build(fmt, content=body, title=title, topic=title, language=language)
     return reply(tool_call_id, result, report_format=fmt)
