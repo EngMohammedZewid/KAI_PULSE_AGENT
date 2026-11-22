@@ -712,15 +712,26 @@ def _extract_chart_urls(messages: List[Dict[str, Any]]) -> List[str]:
     return urls
 
 
+_AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+              "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+
+
+def _generated_line(is_arabic: bool = False, now: Optional[datetime.datetime] = None) -> str:
+    """The report's single date line, in the report's language."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    if is_arabic:
+        return f"تاريخ الإنشاء: {now.day} {_AR_MONTHS[now.month - 1]} {now.year}، {now:%H:%M} UTC"
+    return f"Generated: {now:%B} {now.day}, {now.year}  {now:%H:%M} UTC"
+
+
 def _build_pdf(title: str, content: str, subtitle: str = "",
-               chart_urls: Optional[List[str]] = None) -> bytes:
+               chart_urls: Optional[List[str]] = None, is_arabic: bool = False) -> bytes:
     doc = _PDF()
     doc.vspace(20)
     doc.paragraph(title, size=22, bold=True, color=_BLUE, space_after=6)
     if subtitle:
         doc.paragraph(subtitle, size=11, color=_LGREY, space_after=4)
-    ts = datetime.datetime.utcnow().strftime("%B %d, %Y  %H:%M UTC")
-    doc.paragraph(f"Generated: {ts}", size=9, color=_LGREY, space_after=10)
+    doc.paragraph(_generated_line(is_arabic), size=9, color=_LGREY, space_after=10)
     doc.hline()
     doc.vspace(10)
 
@@ -1129,7 +1140,7 @@ def create_pdf_report(
     else:
         mode = "report"
         default_title = topic[:80] if topic else title[:80]
-        subtitle = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        subtitle = ""  # the date line under the title already says when
 
     # -------------------------------------------------------------------------
     # Generate content via LLM only if not provided by the agent
@@ -1149,7 +1160,7 @@ def create_pdf_report(
             return f"LLM generation failed: {e}"
         if not content:
             return "LLM returned empty content. Try a different model."
-        subtitle += f"  ·  model: {model}"
+        subtitle = f"{subtitle}  ·  model: {model}" if subtitle else f"model: {model}"
 
     # -------------------------------------------------------------------------
     # Derive title
@@ -1163,7 +1174,8 @@ def create_pdf_report(
     # Build PDF
     # -------------------------------------------------------------------------
     try:
-        pdf_bytes = _build_pdf(title, content, subtitle, chart_urls=chart_urls)
+        pdf_bytes = _build_pdf(title, content, subtitle, chart_urls=chart_urls,
+                               is_arabic=_is_arabic_lang(language))
     except Exception as e:
         return f"PDF generation failed: {e}"
 
@@ -1307,8 +1319,8 @@ def _build_docx(title: str, content: str, subtitle: str = "",
         _set_rtl(h)
 
     # Subtitle / timestamp
-    ts = datetime.datetime.utcnow().strftime("%B %d, %Y  %H:%M UTC")
-    sub_text = f"{subtitle}\nGenerated: {ts}" if subtitle else f"Generated: {ts}"
+    stamp = _generated_line(is_arabic)
+    sub_text = f"{subtitle}\n{stamp}" if subtitle else stamp
     sp = doc.add_paragraph(sub_text)
     for run in sp.runs:
         run.font.size = Pt(9)

@@ -19,7 +19,7 @@ def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
         sc.setdefault("ticks", {}).setdefault("font", {}).setdefault("size", 9)
         if "title" in sc:
             sc["title"].setdefault("font", {}).setdefault("size", 9)
-    body = json.dumps({"chart": cfg, "width": width, "height": height, "backgroundColor": "white"}).encode("utf-8")
+    body = json.dumps({"chart": cfg, "width": width, "height": height, "backgroundColor": "white", "version": "4"}).encode("utf-8")
     req = urllib.request.Request(
         "https://quickchart.io/chart/create",
         data=body,
@@ -32,7 +32,7 @@ def _chart_url(config: dict, width: int = 700, height: int = 420) -> str:
     except Exception:
         params = urllib.parse.urlencode({
             "c": json.dumps(cfg, separators=(",", ":")),
-            "w": width, "h": height, "bkg": "white",
+            "w": width, "h": height, "bkg": "white", "v": "4",
         })
         return f"{_QUICKCHART}?{params}"
 
