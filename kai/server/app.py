@@ -175,8 +175,9 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
-        # no-cache: browsers revalidate, so a new page version shows up without a hard refresh.
-        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+        # The KAI chat (static/chat, from the KAI Chat package). no-cache: browsers revalidate,
+        # so a new page version shows up without a hard refresh.
+        return FileResponse(STATIC / "chat" / "chat.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/api/me")
     def me(user: User = Depends(current_user)) -> dict:
