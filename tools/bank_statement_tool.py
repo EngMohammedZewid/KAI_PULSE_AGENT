@@ -729,6 +729,22 @@ def analyze_bank_statement(
 
 
 
+
+def affordable_range(avg_income: float, avg_debt: float, avg_savings: float,
+                     max_dti: float = 40.0) -> dict:
+    """Affordable monthly installment for NEW debt, by the DTI model.
+
+    max_total_debt = income x DTI cap; available = that minus existing debt.
+    High end = min(95% of available, 90% of average savings) (80% of available
+    when savings are not positive); low end = 75% of the high end. Rounded.
+    """
+    max_total_debt = avg_income * (max_dti / 100)
+    available = max(max_total_debt - avg_debt, 0.0)
+    high = min(available * 0.95, avg_savings * 0.90) if avg_savings > 0 else available * 0.80
+    high = max(high, 0.0)
+    return {"max_total_debt": max_total_debt, "available": available,
+            "low": round(high * 0.75), "high": round(high)}
+
 # ---------------------------------------------------------------------------
 # Tool 2: simulate_mortgage_affordability
 # ---------------------------------------------------------------------------
@@ -785,15 +801,10 @@ def simulate_mortgage_affordability(
     def fmt(v: float) -> str:
         return f"{cur} {v:,.0f}"
 
-    # ── Core DTI calculation ──────────────────────────────────────────────────
-    max_total_debt   = avg_income * (max_dti / 100)
-    available        = max(max_total_debt - avg_debt, 0.0)
-
-    # Conservative caps
-    safe_max = min(available * 0.95, avg_savings * 0.90) if avg_savings > 0 else available * 0.80
-    safe_min = safe_max * 0.75
-    safe_max = round(safe_max)
-    safe_min = round(safe_min)
+    # ── Core DTI calculation (shared with the installment and loan tools) ─────
+    rng = affordable_range(avg_income, avg_debt, avg_savings, max_dti)
+    max_total_debt, available = rng["max_total_debt"], rng["available"]
+    safe_min, safe_max = rng["low"], rng["high"]
 
     # ── Affordability verdict ─────────────────────────────────────────────────
     if safe_max <= 0:

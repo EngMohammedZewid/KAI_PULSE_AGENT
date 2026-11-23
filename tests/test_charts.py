@@ -158,12 +158,15 @@ class PageAssetTests(unittest.TestCase):
             client = TestClient(create_app(build_graph(DevEchoModel(), checkpointer=InMemorySaver()),
                                            MemoryRepo(), LocalFileStore(tmp)))
             page = client.get("/").text
-            self.assertIn('src="/static/vendor/chart.umd.js"', page)
-            self.assertIn('src="/static/charts.js"', page)
+            self.assertIn('<base href="/static/chat/">', page, "the KAI chat page")
+            self.assertIn('src="./chat.mjs"', page)
+            for asset in ("chat.mjs", "reply.mjs", "session.mjs", "texts.mjs", "kai-charts.mjs", "assets/kai-logo.png"):
+                self.assertEqual(client.get(f"/static/chat/{asset}").status_code, 200, asset)
             lib = client.get("/static/vendor/chart.umd.js")
             self.assertEqual(lib.status_code, 200)
             self.assertIn("Chart.js v4.4.1", lib.text[:200])
-            self.assertIn("KaiCharts", client.get("/static/charts.js").text)
+            self.assertIn('src="/static/vendor/chart.umd.js"', page, "Chart.js is loaded from our server")
+            self.assertIn("export function chartCard", client.get("/static/chat/kai-charts.mjs").text)
 
 
 if __name__ == "__main__":
