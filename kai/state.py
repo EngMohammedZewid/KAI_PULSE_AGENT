@@ -21,7 +21,8 @@ ReportFormat = Literal["pdf", "docx"]
 
 
 class FileRef(TypedDict):
-    """A file the user uploaded. The bytes live in the FileStore, not in state."""
+    """A file the user uploaded, or one the agent made (a report, an export).
+    The bytes live in the FileStore, not in state."""
 
     id: str              # short id the model uses to refer to the file
     name: str            # original filename
@@ -89,6 +90,8 @@ class KaiState(MessagesState):
     analysis: NotRequired[Optional[Analysis]]
     charts: NotRequired[Annotated[list[ChartRef], add_charts]]
     report_format: NotRequired[Optional[ReportFormat]]
+    # Files the agent made (reports, exports), downloadable through the server.
+    outputs: NotRequired[Annotated[list[FileRef], merge_files]]
 
     # Per-turn fields (overwritten every turn by the ingest node)
     uploads: NotRequired[list[FileRef]]      # input: files attached to this message

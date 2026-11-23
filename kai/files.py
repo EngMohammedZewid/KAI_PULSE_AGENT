@@ -46,7 +46,10 @@ def new_file_ref(name: str, size: int, key_prefix: str = "uploads") -> FileRef:
 
 
 class FileStore(Protocol):
-    def put(self, name: str, data: bytes) -> FileRef: ...
+    def put(self, name: str, data: bytes, prefix: Optional[str] = None) -> FileRef:
+        """Store bytes under `prefix` (default: uploads; generated files use outputs)."""
+        ...
+
     def read_bytes(self, ref: FileRef) -> bytes: ...
     def locator(self, ref: FileRef) -> str:
         """A path or URL that file-path based tools (e.g. the Excel tools) can open."""
@@ -77,8 +80,8 @@ class LocalFileStore:
             raise ValueError("File key points outside the store root.")
         return path
 
-    def put(self, name: str, data: bytes) -> FileRef:
-        ref = new_file_ref(name, len(data))
+    def put(self, name: str, data: bytes, prefix: Optional[str] = None) -> FileRef:
+        ref = new_file_ref(name, len(data), prefix or "uploads")
         path = self._path(ref)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
@@ -107,10 +110,10 @@ class S3FileStore:
                                "AWS_SECRET_ACCESS_KEY and AWS_S3_BUCKET.")
         return access_key, secret_key, bucket, region
 
-    def put(self, name: str, data: bytes) -> FileRef:
+    def put(self, name: str, data: bytes, prefix: Optional[str] = None) -> FileRef:
         from tools.file_upload_s3_tool import _s3_put
 
-        ref = new_file_ref(name, len(data), self.prefix)
+        ref = new_file_ref(name, len(data), prefix or self.prefix)
         _s3_put(ref["key"], data, ref["mime"], *self._env())
         return ref
 

@@ -27,6 +27,7 @@ from kai.tools._common import record_charts
 from kai.tools.aggregate import aggregate_file
 from kai.tools.data_files import DATA_FILE_TOOLS, list_files
 from kai.tools.documents import create_report
+from kai.tools.exports import export_table_to_file
 from kai.tools.finance import FINANCE_TOOLS, financial_chart
 from kai.tools.financing import FINANCING_TOOLS
 from tools.chart_analytics_tools import render_bar_chart, render_pie_chart, render_time_series
@@ -38,7 +39,6 @@ from tools.cognos_analytics_tools import (
     cognos_list_content,
     cognos_render_widget_iframe,
 )
-from tools.export_table_tool import export_table_to_file
 from tools.fetch_text_from_url_tool import fetch_text_from_url
 from tools.sendgrid_email_tool import send_file_via_sendgrid
 

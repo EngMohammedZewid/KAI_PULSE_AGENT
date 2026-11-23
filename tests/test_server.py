@@ -93,7 +93,7 @@ class ConversationTests(ServerTestCase):
         self.assertEqual(history["thread"]["title"], "add this statement")
 
     def test_report_question_answered_by_button_or_typing(self):
-        p = mock.patch("kai.tools.documents._build", return_value="Report ready: https://example.com/r.pdf")
+        p = mock.patch("kai.tools.documents._render", return_value=b"%PDF-1.4 test")
         build = p.start()
         self.addCleanup(p.stop)
         tid = self.new_thread()
@@ -117,7 +117,7 @@ class ConversationTests(ServerTestCase):
         self.assertEqual(r.status_code, 409, "nothing is pending any more")
 
     def test_resume_endpoint(self):
-        p = mock.patch("kai.tools.documents._build", return_value="ok")
+        p = mock.patch("kai.tools.documents._render", return_value=b"%PDF-1.4 test")
         build = p.start()
         self.addCleanup(p.stop)
         tid = self.new_thread()

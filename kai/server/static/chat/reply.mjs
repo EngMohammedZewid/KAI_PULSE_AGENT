@@ -9,7 +9,11 @@ import { api, session } from "./session.mjs";
 import { TEXTS } from "./texts.mjs";
 
 const FORMAT_OPTIONS = { en: ["PDF", "Word (.docx)"], ar: ["PDF", "Word (.docx)"] };
-const FILE_LINK = /\[([^\]]+)\]\(((?:https?|file):\/\/[^)\s]+\.(pdf|docx|xlsx|csv)(?:\?[^)\s]*)?)\)/gi;
+// Links to generated files: public links, or this server's protected downloads (/api/threads/…/files/f_….pdf).
+const FILE_LINK = /\[([^\]]+)\]\(((?:(?:https?|file):\/\/[^)\s]+|\/api\/threads\/[\w-]+\/files\/[\w-]+)\.(pdf|docx|xlsx|csv)(?:\?[^)\s]*)?)\)/gi;
+/** A file the agent made here: downloaded with the sign-in token, not opened as a link. */
+export const isDownload = (url) => /^\/api\/threads\/[\w-]+\/files\/[\w-]+\.\w+$/.test(String(url || ""));
+const size = (n) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
 /** The agent writes some HTML (chart images, links); the chat shows Markdown only.
  *  Links to the charts in `hide` are dropped: those charts are drawn as interactive cards. */
@@ -47,7 +51,10 @@ export function answerParts(m) {
   const blocks = [];
   if (m.kpis) blocks.push({ type: "kpis", kpis: m.kpis });
   for (const c of charts) blocks.push({ type: "chart", url: c.url, spec: c.spec });
-  blocks.push(...documents(text));
+  // Files the agent made this turn, even if the answer left the link out; then any other file links.
+  const made = (m.downloads || []).filter((d) => isDownload(d.url))
+    .map((d) => ({ type: "document", title: d.name, format: d.format, url: d.url, detail: Number.isFinite(d.size) ? size(d.size) : undefined }));
+  blocks.push(...made, ...documents(text).filter((doc) => !made.some((d) => d.url === doc.url)));
   return { text, blocks };
 }
 
