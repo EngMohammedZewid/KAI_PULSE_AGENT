@@ -10,18 +10,21 @@ only to the user who created it; another user's thread id answers 404.
     POST /api/threads/{id}/messages         multipart: text, files[] -> new replies
     POST /api/threads/{id}/resume           {"answer"} -> answers a pending question
     POST /api/threads/{id}/feedback         {"message_index", "rating": up|down, "comment"?}
+    GET  /api/threads/{id}/files/{file}     download a report or export the agent made
     GET  /                                  the chat page
 """
 from __future__ import annotations
 
 import logging
+import mimetypes
 import threading
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.types import Command
@@ -71,11 +74,13 @@ def serialize(messages: list, charts: Optional[list] = None) -> list[dict]:
     `index` is the message's position in this list, stable as the thread grows.
 
     An assistant reply also carries `charts` (url + plain-data spec, for each chart
-    image it shows) and `kpis` (the analysis summary, when its turn analyzed
-    statements), so the page can draw interactive charts and summary cards."""
+    image it shows), `kpis` (the analysis summary, when its turn analyzed
+    statements) and `downloads` (files the agent made since the last reply), so
+    the page can draw interactive charts, summary cards and download cards."""
     specs = {c["url"]: c["spec"] for c in charts or [] if c.get("spec")}
     out = []
     kpis = None  # summary from analyze_statements earlier in the current turn
+    downloads: list[dict] = []  # files made since the last assistant reply
     for m in messages:
         if isinstance(m, HumanMessage):
             kpis = None
@@ -85,6 +90,8 @@ def serialize(messages: list, charts: Optional[list] = None) -> list[dict]:
             art = getattr(m, "artifact", None)
             if isinstance(art, dict) and isinstance(art.get("kpis"), dict):
                 kpis = art["kpis"]
+            if isinstance(art, dict) and isinstance(art.get("download"), dict):
+                downloads.append(art["download"])
         elif isinstance(m, AIMessage) and _text(m.content).strip():
             text = _text(m.content)
             item = {"role": "assistant", "content": text}
@@ -93,6 +100,8 @@ def serialize(messages: list, charts: Optional[list] = None) -> list[dict]:
                 item["charts"] = shown
             if kpis:
                 item["kpis"], kpis = kpis, None
+            if downloads:
+                item["downloads"], downloads = downloads, []
             out.append(item)
     for i, m in enumerate(out):
         m["index"] = i
@@ -108,6 +117,14 @@ def pending_question(snapshot) -> Optional[dict]:
         return None
     value = interrupts[0].value
     return value if isinstance(value, dict) else {"question": str(value)}
+
+
+def attachment_header(name: str) -> str:
+    """Content-Disposition that keeps Arabic names (RFC 6266 filename*), with an ASCII fallback."""
+    ascii_name = name.encode("ascii", "ignore").decode().replace('"', "").replace("\\", "").strip()
+    if not any(c.isalnum() for c in Path(ascii_name).stem):  # e.g. an all-Arabic name
+        ascii_name = "file" + Path(name).suffix
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{urllib.parse.quote(name)}"
 
 
 def thread_json(t: Thread) -> dict:
@@ -208,6 +225,28 @@ def create_app(graph, repo: Repo, store: FileStore, settings: Optional[Settings]
             raise HTTPException(422, "message_index must point at an assistant reply.")
         repo.set_feedback(thread.user_id, thread.id, body.message_index,
                           1 if body.rating == "up" else -1, body.comment.strip()[:1000])
+
+    @app.get("/api/threads/{thread_id}/files/{file_name}")
+    def download(file_name: str, thread: Thread = Depends(owned_thread)) -> Response:
+        # Only files this thread's agent made; "f_ab12cd34.pdf" -> id "f_ab12cd34".
+        file_id = Path(file_name).stem
+        outputs = graph.get_state(run_config(thread)).values.get("outputs") or []
+        ref = next((f for f in outputs if f["id"] == file_id), None)
+        if ref is None:
+            raise HTTPException(404, "File not found.")
+        try:
+            data = store.read_bytes(ref)
+        except FileNotFoundError:
+            raise HTTPException(404, "This file is no longer available.")
+        except Exception:
+            log.exception("Reading %s for thread %s failed", ref["key"], thread.id)
+            raise HTTPException(502, "The file could not be read. Please try again.")
+        mime = mimetypes.guess_type(ref["name"])[0] or ref.get("mime") or "application/octet-stream"
+        return Response(data, media_type=mime, headers={
+            "Content-Disposition": attachment_header(ref["name"]),
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        })
 
     @app.post("/api/threads/{thread_id}/messages")
     def post_message(

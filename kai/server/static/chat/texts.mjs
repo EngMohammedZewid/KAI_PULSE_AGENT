@@ -139,6 +139,8 @@ export const TEXTS = {
       newMessage: "New message from KAI",
       sources: "Sources",
       open: "Open",
+      download: "Download", // KAI Pulse
+      downloadFailed: "The file could not be downloaded. Please try again.", // KAI Pulse
       ctaTitle: "Want to see it in action?",
       ctaBook: "Book a demo",
       ctaMessage: "I'd like to book a demo",
@@ -211,6 +213,8 @@ export const TEXTS = {
       newMessage: "رسالة جديدة من KAI",
       sources: "المصادر",
       open: "فتح",
+      download: "تحميل", // KAI Pulse
+      downloadFailed: "تعذّر تحميل الملف. حاول مرة أخرى.", // KAI Pulse
       ctaTitle: "هل تريد أن تراه عملياً؟",
       ctaBook: "احجز عرضاً توضيحياً",
       ctaMessage: "أرغب في حجز عرض توضيحي",

@@ -56,10 +56,14 @@ SPECIALIST_RULES: dict[str, str] = {
         "- Totals or averages from an uploaded file (by month, week, category...): call "
         "aggregate_file first, then pass its table unchanged to export_table_to_file.\n"
         "- Excel or CSV export of a table: export_table_to_file with file_format "
-        "\"xlsx\" or \"csv\"; return the download link.\n"
+        "\"xlsx\" or \"csv\".\n"
+        "- Files you make (reports, exports) come back with a download link like "
+        "/api/threads/.../files/f_....pdf: give it to the user exactly as written, never "
+        "change or shorten it. The chat shows a Download button for it.\n"
         "- Email: only when the user asks. Ask for any missing recipient, subject or "
         "message, then call send_file_via_sendgrid with the file's download link as "
-        "file_url. Never reveal credentials."
+        "file_url. Files made in this chat (links starting with /api/) cannot be emailed "
+        "yet: say so instead. Never reveal credentials."
     ),
     "data": (
         "You chart and inspect data.\n"

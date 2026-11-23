@@ -4,7 +4,8 @@ import { icon, topicIcon } from "./icons.mjs";
 import { markdown, safeHref } from "./markdown.mjs";
 import { reply } from "./reply.mjs";
 import { session, signIn, signOut, api, onSessionChange, newConversation, rate as sendRating } from "./session.mjs"; // KAI Pulse
-import { answerParts } from "./reply.mjs"; // KAI Pulse
+import { answerParts, isDownload } from "./reply.mjs"; // KAI Pulse
+import { download, SignedOut } from "./session.mjs"; // KAI Pulse
 import { chartCard, kpiCards } from "./kai-charts.mjs"; // KAI Pulse
 import { TEXTS, CONTACT_URL } from "./texts.mjs";
 
@@ -229,10 +230,21 @@ function block(item, last) {
     el("div", { class: "kc-options-list", role: "group" }, item.options.map((option) => el("button", { type: "button", class: "kc-chip", dir: "auto", disabled: off, onclick: () => send(option) }, option))));
   if (item.type === "citations") return el("div", { class: "kc-citations" }, el("p", { class: "kc-citations-title" }, t("sources")),
     el("ol", {}, item.items.map((source) => el("li", {}, safeHref(source.url) ? el("a", { href: safeHref(source.url), target: "_blank", rel: "noopener noreferrer nofollow", dir: "auto" }, source.title) : el("span", { dir: "auto" }, source.title)))));
-  if (item.type === "document" && safeHref(item.url)) return el("section", { class: "kc-cards" }, el("article", { class: "kc-card kc-doc" },
+  const docCard = (...actions) => el("section", { class: "kc-cards" }, el("article", { class: "kc-card kc-doc" },
     el("div", { class: "kc-doc-head" }, el("span", { class: "kc-doc-badge", "aria-hidden": "true" }, item.format || icon("file", 16)),
       el("div", { class: "kc-doc-names" }, el("p", { class: "kc-card-title", dir: "auto" }, item.title), item.detail && el("p", { class: "kc-card-muted" }, el("bdi", {}, item.detail)))),
-    el("div", { class: "kc-card-actions" }, link(t("open"), safeHref(item.url), true))));
+    ...actions));
+  if (item.type === "document" && isDownload(item.url)) { // KAI Pulse: protected download with the sign-in token
+    const status = el("p", { class: "kc-card-muted", role: "status", dir: "auto" });
+    const button = el("button", { type: "button", class: "kc-card-button kc-card-primary", onclick: () => {
+      button.disabled = true;
+      status.textContent = "";
+      download(item.url, item.title).catch((failure) => { if (!(failure instanceof SignedOut)) status.textContent = t("downloadFailed"); })
+        .finally(() => { button.disabled = false; });
+    } }, t("download"), icon("file", 14));
+    return docCard(el("div", { class: "kc-card-actions" }, button), status);
+  }
+  if (item.type === "document" && safeHref(item.url)) return docCard(el("div", { class: "kc-card-actions" }, link(t("open"), safeHref(item.url), true)));
   if (item.type === "kpis") return kpiCards(item.kpis, { locale, labels: { summary: t("summary"), income: t("kpiIncome"), spending: t("kpiSpending"), savings: t("kpiSavings"), dti: t("kpiDti") } }); // KAI Pulse
   if (item.type === "chart") return chartCard(item.spec, item.url, { locale, imageLabel: t("chartImage"), hideLabel: t("chartToggle") }); // KAI Pulse
   if (item.type === "cta" && last) {

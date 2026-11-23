@@ -72,21 +72,23 @@ def _fake_services(stack: ExitStack, effects: SideEffects, mock_extraction: Opti
                    "chart_analytics_tools", "chart_s3_tool", "chart_cos_tool"):
         stack.enter_context(mock.patch(f"tools.{module}._chart_url", side_effect=chart_url))
 
-    def build_report(fmt, **kwargs):
-        effects.reports.append({"format": fmt, **kwargs})
-        return f"Report ready: https://example.com/reports/eval-{len(effects.reports)}.{fmt}"
+    def build_report(fmt, title, content, language):
+        effects.reports.append({"format": fmt, "title": title, "content": content, "language": language})
+        return b"%PDF-1.4 eval report"
 
-    stack.enter_context(mock.patch("kai.tools.documents._build", side_effect=build_report))
+    stack.enter_context(mock.patch("kai.tools.documents._render", side_effect=build_report))
 
-    fake_s3 = ("AKIAEVALFAKE", "eval-secret", "eval-bucket", "us-east-2")
+    # Exports are real files saved to the run's local store; record what was saved.
+    from kai.tools import exports
 
-    def s3_put(key, body, content_type, *_creds):
-        effects.exports.append({"key": key, "content_type": content_type, "size": len(body)})
+    real_save = exports.save_output
 
-    stack.enter_context(mock.patch("tools.export_table_tool._s3_env", return_value=fake_s3))
-    stack.enter_context(mock.patch("tools.export_table_tool._s3_put", side_effect=s3_put))
-    stack.enter_context(mock.patch("tools.export_table_tool._s3_presign",
-                                   side_effect=lambda key, *a, **k: f"https://example.com/{key}"))
+    def save_export(config, name, data):
+        ref, link = real_save(config, name, data)
+        effects.exports.append({"key": ref["key"], "content_type": ref["mime"], "size": ref["size"]})
+        return ref, link
+
+    stack.enter_context(mock.patch("kai.tools.exports.save_output", side_effect=save_export))
 
     class FakeSendGrid:
         def __init__(self, *_a, **_k):
@@ -243,7 +245,7 @@ def check_turn(expect: dict, *, state: dict, tools: list[str], reply: str, llm_c
         new = effects.exports[len(before.exports):]
         ext = "." + expect["export"]["format"]
         if not any(e["key"].endswith(ext) for e in new):
-            fails.append(f"no {ext} export uploaded")
+            fails.append(f"no {ext} export saved")
     return fails
 
 

@@ -27,6 +27,25 @@ export async function api(path, { method = "GET", json, body, signal } = {}) {
   return data;
 }
 
+/** Download a file the agent made. It is fetched with the token in the header (the token is
+ *  never put in a link), then saved under the name the server gives. */
+export async function download(path, fallbackName = "file") {
+  const response = await fetch(path, { headers: { Authorization: `Bearer ${session.token}` } });
+  if (response.status === 401) { signOut(); throw new SignedOut("signed out"); }
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const blob = await response.blob();
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(response.headers.get("content-disposition") || "");
+  let name = fallbackName;
+  try { if (star) name = decodeURIComponent(star[1]); } catch { /* keep the fallback */ }
+  const url = URL.createObjectURL(blob);
+  const link = Object.assign(document.createElement("a"), { href: url, download: name });
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Check a token with the server; keep it only if it works. */
 export async function signIn(token) {
   const value = String(token || "").trim();

@@ -138,7 +138,7 @@ class StatementFlowTests(GraphTestCase):
 class ReportTests(GraphTestCase):
     def setUp(self):
         super().setUp()
-        p = mock.patch("kai.tools.documents._build", return_value="Report ready: https://example.com/r.pdf")
+        p = mock.patch("kai.tools.documents._render", return_value=b"%PDF-1.4 test report")
         self.build = p.start()
         self.addCleanup(p.stop)
         self.graph.update_state(self.cfg, {"charts": [
@@ -157,11 +157,19 @@ class ReportTests(GraphTestCase):
 
         s = self.graph.invoke(Command(resume="PDF please"), self.cfg)
         self.assertEqual(self.model.script, [])
-        fmt, kwargs = self.build.call_args.args[0], self.build.call_args.kwargs
-        self.assertEqual(fmt, "pdf")
-        self.assertEqual(kwargs["language"], "English")
-        self.assertIn("![Savings](https://quickchart.io/chart/render/s1)", kwargs["content"])
+        fmt, title, content, language = self.build.call_args.args
+        self.assertEqual((fmt, title, language), ("pdf", "Q1 Finances", "English"))
+        self.assertIn("![Savings](https://quickchart.io/chart/render/s1)", content)
         self.assertEqual(s["report_format"], "pdf")
+        # The file is kept for download from this thread, not uploaded with a public link.
+        [ref] = s["outputs"]
+        self.assertEqual(ref["name"], "Q1_Finances.pdf")
+        self.assertTrue(ref["key"].startswith("outputs/"))
+        self.assertEqual(self.store.read_bytes(ref), b"%PDF-1.4 test report")
+        link = f"/api/threads/{self.cfg['configurable']['thread_id']}/files/{ref['id']}.pdf"
+        tool_msg = next(m for m in s["messages"] if getattr(m, "tool_call_id", None) and "create_report" in str(m.name))
+        self.assertIn(link, tool_msg.content)
+        self.assertEqual(tool_msg.artifact["download"]["url"], link)
         self.assertEqual(s["messages"][-1].content, "Here is your report: https://example.com/r.pdf")
 
     def test_named_format_skips_question(self):
@@ -172,7 +180,8 @@ class ReportTests(GraphTestCase):
             say("done")])
         self.assertFalse(s.get("__interrupt__"))
         self.assertEqual(self.build.call_args.args[0], "docx")
-        self.assertEqual(self.build.call_args.kwargs["content"].count("render/s1"), 1,
+        self.assertEqual(s["outputs"][-1]["name"], "T.docx")
+        self.assertEqual(self.build.call_args.args[2].count("render/s1"), 1,
                          "a chart already in the content is not appended twice")
 
 
