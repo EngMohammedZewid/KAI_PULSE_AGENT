@@ -24,9 +24,11 @@ from kai.nodes import after_ingest, detect_language, ingest, route_target
 from kai.prompts import ROUTER_PROMPT, context_block, specialist_prompt
 from kai.state import KaiState
 from kai.tools._common import record_charts
+from kai.tools.aggregate import aggregate_file
 from kai.tools.data_files import DATA_FILE_TOOLS, list_files
 from kai.tools.documents import create_report
 from kai.tools.finance import FINANCE_TOOLS, financial_chart
+from kai.tools.financing import FINANCING_TOOLS
 from tools.chart_analytics_tools import render_bar_chart, render_pie_chart, render_time_series
 from tools.chart_cos_tool import inspect_cos_file, list_cos_files, render_chart_from_cos
 from tools.chart_s3_tool import inspect_s3_file, list_s3_files, render_chart_from_s3
@@ -41,9 +43,10 @@ from tools.fetch_text_from_url_tool import fetch_text_from_url
 from tools.sendgrid_email_tool import send_file_via_sendgrid
 
 SPECIALIST_TOOLS = {
-    "finance": [*FINANCE_TOOLS, list_files],
-    "documents": [create_report, financial_chart, export_table_to_file, send_file_via_sendgrid],
-    "data": [*DATA_FILE_TOOLS, render_bar_chart, render_pie_chart, render_time_series,
+    "finance": [*FINANCE_TOOLS, *FINANCING_TOOLS, list_files],
+    "documents": [create_report, financial_chart, aggregate_file, export_table_to_file,
+                  send_file_via_sendgrid],
+    "data": [*DATA_FILE_TOOLS, aggregate_file, render_bar_chart, render_pie_chart, render_time_series,
              list_s3_files, inspect_s3_file, render_chart_from_s3,
              list_cos_files, inspect_cos_file, render_chart_from_cos, fetch_text_from_url],
     "cognos": [cognos_list_content, cognos_generate_embed_url,
